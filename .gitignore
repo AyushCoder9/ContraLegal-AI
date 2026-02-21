@@ -49,3 +49,6 @@ models/*
 
 # OS files
 .DS_Store
+
+# Personal notes (not tracked)
+notes.txt

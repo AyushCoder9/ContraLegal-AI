@@ -1,0 +1,17 @@
+# PDF processing
+pymupdf
+
+# NLP
+spacy
+
+# Machine Learning
+scikit-learn
+numpy
+pandas
+
+# UI
+streamlit
+
+# Utilities
+regex
+tqdm

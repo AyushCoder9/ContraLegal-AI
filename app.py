@@ -1,7 +1,7 @@
 import tempfile
 import streamlit as st
-from src.ui.components import render_risk_card, render_metrics, render_pie_chart
-from src.inference.predictor import load_model, predict_risk, generate_clause_clusters
+from src.ui.components import render_risk_card, render_metrics, render_pie_chart, render_executive_summary
+from src.inference.predictor import load_model, predict_hybrid, generate_clause_clusters, summarize_contract
 from src.data_pipeline.pipeline import DataPipeline
 
 st.set_page_config(
@@ -81,6 +81,31 @@ st.markdown(
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
+
+    .exec-summary-card {
+        background: rgba(99, 102, 241, 0.08);
+        border: 1px solid rgba(99, 102, 241, 0.25);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 16px;
+        padding: 1.5rem 2rem;
+        margin-bottom: 2rem;
+    }
+    .exec-summary-card h3 {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #6366f1;
+        margin-bottom: 1rem;
+    }
+    .exec-clause {
+        padding: 0.6rem 1rem;
+        margin-bottom: 0.5rem;
+        border-left: 3px solid #a855f7;
+        background: rgba(168, 85, 247, 0.06);
+        border-radius: 0 8px 8px 0;
+        font-size: 0.92rem;
+        line-height: 1.6;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -155,7 +180,13 @@ if analyze_btn:
 
 if clauses:
     with st.spinner("Analysing clauses..."):
-        results_df = predict_risk(clauses, vectorizer, model)
+        results_df = predict_hybrid(clauses, vectorizer, model)
+        results_df["risk_label"] = results_df["final_score"].apply(
+            lambda s: "High Risk" if s >= 0.5 else "Low Risk"
+        )
+        summary_clauses = summarize_contract(clauses, top_n=5)
+
+    render_executive_summary(summary_clauses)
 
     st.markdown("---")
     st.markdown("### 📊 Risk Dashboard")

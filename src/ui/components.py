@@ -1,6 +1,23 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from typing import List
+
+def render_executive_summary(summary_clauses: List[dict]):
+    items_html = "".join(
+        f'<div class="exec-clause">{item["clause_text"]}</div>'
+        for item in summary_clauses
+    )
+    st.markdown(
+        f"""
+        <div class="exec-summary-card">
+            <h3>Executive Summary — Top {len(summary_clauses)} Critical Clauses</h3>
+            {items_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
 
 def render_risk_card(clause: str, label: str):
     css_class = ""

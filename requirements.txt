@@ -1,16 +1,19 @@
 # PDF processing
 pymupdf
+pdfplumber>=0.10.0
 
 # NLP
 spacy
 
 # Machine Learning
-scikit-learn
-numpy
-pandas
+scikit-learn>=1.3.0
+numpy>=1.24.0
+pandas>=2.0.0
 
 # UI
-streamlit
+streamlit>=1.30.0
+plotly>=5.18.0
+matplotlib>=3.7.0
 
 # Utilities
 regex

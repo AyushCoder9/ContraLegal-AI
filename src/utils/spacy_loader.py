@@ -10,9 +10,8 @@ def load_spacy_model():
     If not installed, download automatically.
     """
     try:
-        return spacy.load(MODEL_NAME)
-    except OSError:
-        print(f"spaCy model '{MODEL_NAME}' not found. Downloading via spacy.cli...")
-        from spacy.cli import download
-        download(MODEL_NAME)
+        import en_core_web_sm
+        return en_core_web_sm.load()
+    except Exception as e:
+        print(f"Failed to load via module, attempting spacy.load: {e}")
         return spacy.load(MODEL_NAME)

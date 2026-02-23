@@ -1,0 +1,188 @@
+% IEEE Double-Column Template with Appendix
+% Compile: pdflatex → bibtex → pdflatex → pdflatex
+
+\documentclass[conference]{IEEEtran}
+
+\IEEEoverridecommandlockouts
+
+\usepackage[numbers]{natbib}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{listings}
+
+% Code listing style
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  captionpos=b
+}
+
+\begin{document}
+
+% ---------- TITLE ----------
+\title{ContraLegal-AI: Intelligent Contract Risk Analysis using Multi-Modal Natural Language Processing and Machine Learning}
+
+\author{
+\IEEEauthorblockN{Ayush Kumar Singh, Isha Singh, Priyanka Gnana Karanam}
+\IEEEauthorblockA{
+Null Set \\}
+}
+
+\maketitle
+
+% ---------- ABSTRACT ----------
+\begin{abstract}
+Manual review of commercial contracts is a time-consuming, expensive, and error-prone process. ContraLegal-AI proposes a hybrid intelligence system designed to automate the extraction, classification, and thematic analysis of legal risk clauses within PDF contracts. By combining advanced Natural Language Processing (NLP) techniques, Term Frequency-Inverse Document Frequency (TF-IDF) vectorization, and a Random Forest classification algorithm, the system classifies clause-level risk with 97\% accuracy. Furthermore, we implement a rule-based Hybrid Decision Engine and Unsupervised K-Means clustering to provide robust thematic insights. This paper outlines the quantitative results, empirical evaluation, and system architecture for Milestone 1.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Natural Language Processing, Machine Learning, Contract Analysis, Risk Classification, TF-IDF, Random Forest.
+\end{IEEEkeywords}
+
+% ---------- INTRODUCTION ----------
+\section{Introduction}
+In the modern corporate landscape, legal departments are inundated with complex contracts, such as Non-Disclosure Agreements (NDAs), Mergers and Acquisitions (M\&A) contracts, and Service Level Agreements (SLAs). Identifying high-risk clauses—such as asymmetrical indemnification, unrestricted liability, or hidden auto-renewal terms—requires meticulous human review. 
+
+ContraLegal-AI addresses this bottleneck by providing a highly scalable automated risk dashboard. The core objective of this project is to parse unstructured legal PDF documents and evaluate textual risk through a combination of statistical machine learning and deterministic legal rules.
+
+% ---------- RELATED WORK ----------
+\section{Related Work}
+The automation of legal document review has gained significant traction with the advent of Natural Language Processing (NLP). Early systems relied heavily on deterministic rule-based matching \cite{contract_review_old}. Modern approaches have shifted towards deep learning and transformer-based models like LegalBERT for semantic understanding. However, for baseline commercial viable systems, statistical methods such as TF-IDF coupled with ensemble classifiers remain highly effective and computationally efficient \cite{scikit-learn}. The availability of expert-annotated legal corpora, such as the Contract Understanding Atticus Dataset (CUAD) \cite{atticus}, has further accelerated the development of supervised machine learning models in the legal tech domain.
+
+% ---------- METHODOLOGY ----------
+\section{Methodology}
+The system architecture follows a distinct pipeline format: Data Extraction, Text Normalization, Machine Learning Classification, Hybrid Risk Scoring, and Thematic Grouping.
+
+\subsection{Dataset Description}
+The model was trained on a proprietary dataset comprising 21,144 manually annotated legal clauses. The distribution consisted of 12,816 High Risk clauses and 8,328 Low Risk clauses.
+
+\subsection{Preprocessing}
+The ingestion layer handles raw, unstructured PDF text. We utilized the \texttt{PyMuPDF} library to geometrically extract textual data. Once extracted, the raw text is subjected to a normalization pipeline utilizing \texttt{spaCy} \cite{spacy}. Stop words, punctuation, and non-alphanumeric noise are stripped. Sentences are segmented into distinct clauses. Furthermore, a Privacy Masker employs Regular Expressions to dynamically redact Personally Identifiable Information (PII) to ensure data protection compliance.
+
+\subsection{Feature Engineering}
+Textual clauses are mathematically transformed into numerical vectors using Term Frequency-Inverse Document Frequency (TF-IDF). The weight $w_{i,j}$ of term $i$ in document $j$ is calculated as:
+\begin{equation}
+ w_{i,j} = \text{TF}_{i,j} \times \log \left( \frac{N}{\text{DF}_i} \right)
+\end{equation}
+Where $\text{TF}_{i,j}$ is the frequency of term $i$ in clause $j$, $N$ is the total number of clauses, and $\text{DF}_i$ is the document frequency of term $i$. We configured the vectorizer to capture both unigrams and bigrams, limited to the top 5,000 features.
+
+\subsection{Models Used}
+
+\subsubsection{Random Forest Classifier}
+We employ a Random Forest Classifier to identify patterns associated with "High Risk" clauses. The final class prediction $\hat{y}$ is determined via a majority vote among the individual decision trees $T$:
+\begin{equation}
+\hat{y} = \text{mode} \{ T_1(x), T_2(x), \dots, T_k(x) \}
+\end{equation}
+
+\subsubsection{Hybrid Decision Engine}
+To offset the purely statistical nature of the ML classifier, a rule-based inference engine applies deterministic legal constraints. A predefined Legal Keyword Engine scans the clause for high-stakes terminology. A final weighted risk score ($R_{final}$) is geometrically calculated by merging the ML probability ($P_{ml}$) and a Keyword Threat Multiplier ($M_k$):
+\begin{equation}
+R_{final} = \min(P_{ml} \times M_k, 1.0)
+\end{equation}
+
+\subsubsection{Unsupervised Thematic Analysis}
+To organize large documents, we implement K-Means clustering. The algorithm partitions $n$ clauses into $k$ sets by minimizing the within-cluster sum of squares (WCSS).
+
+\subsection{Training and Validation}
+Due to the implicitly imbalanced nature of legal risk, we utilized balanced class weighting during the training phase. The classification model was evaluated using a 20\% hold-out test set ($N=4,229$) to ensure generalizability to unseen contract clauses.
+
+% ---------- RESULTS ----------
+\section{Results}
+
+\subsection{Quantitative Results}
+The Random Forest model achieved exceptional empirical results on the hold-out validation set.
+
+\begin{table}[ht]
+\centering
+\caption{Model Performance Comparison on Test Data}
+\begin{tabular}{lcccc}
+\toprule
+Risk Class & Acc & Prec & Rec & F1 \\
+\midrule
+High Risk & - & 0.98 & 0.97 & 0.98 \\
+Low Risk & - & 0.96 & 0.97 & 0.97 \\
+\midrule
+\textbf{Macro Avg} & \textbf{0.97} & \textbf{0.97} & \textbf{0.97} & \textbf{0.97} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Figures}
+The confusion matrix demonstrates the model's proficiency in accurately identifying both the High Risk and Low Risk classes with minimal false positives or false negatives.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.45\textwidth]{../models/confusion_matrix.png}
+\caption{Confusion Matrix representing True Positives and False Positives across the test subset of legal clauses.}
+\label{fig:confusion_matrix}
+\end{figure}
+
+% ---------- DISCUSSION ----------
+\section{Discussion}
+The hybrid approach combining TF-IDF Random Forest with rule-based heuristics proved highly effective for achieving accurate, interpretable risk classification. However, the system is fundamentally constrained by its lack of deep semantic understanding. As a statistical bag-of-words model, it may struggle with highly complex, nuanced legal phrasing where word order dictates the actual obligation.
+
+For future implementations, we plan to migrate from statistical TF-IDF word representations to deep-learning neural word embeddings such as LegalBERT. Furthermore, expanding the training corpus to encompass more comprehensive datasets like the Contract Understanding Atticus Dataset (CUAD) will significantly bolster real-world commercial robustness.
+
+% ---------- CONCLUSION ----------
+\section{Conclusion}
+The ContraLegal-AI system successfully fulfills its Milestone 1 objectives by providing an end-to-end, modular application that accurately segments, classifies, and clusters legal text. The implementation demonstrates how the fusion of modern UI dashboards, statistical machine learning, and deterministic legal rules can effectively democratize and accelerate the contract review process.
+
+% ---------- REFERENCES ----------
+\bibliographystyle{IEEEtranN}
+\bibliography{references}
+
+% ---------- APPENDIX ----------
+\appendix
+
+\section{GitHub Repository Information}
+
+This appendix provides details regarding the project’s GitHub repository and associated file structure for reproducibility and open-source collaboration.
+
+\subsection{Repository Link}
+The complete source code, datasets, trained models, and documentation are available at:
+
+\begin{center}
+\textbf{\url{https://github.com/AyushCoder9/ContraLegal-AI}}
+\end{center}
+
+\subsection{Repository Structure}
+
+The project repository follows the modular structure shown below:
+
+\begin{lstlisting}
+ContraLegal-AI/
+|- app.py 
+|- src/
+|  |- model_trainer.py
+|  |- ui/
+|  |- data_pipeline/
+|  |- inference/
+|  |- model/
+|- data/
+|  |- raw/
+|- models/
+|- report/
+|- requirements.txt
+\end{lstlisting}
+
+\subsection{Description of Key Components}
+
+\begin{itemize}
+    \item \textbf{data/}: Contains the raw legal clauses dataset (\texttt{legal\_docs\_modified.csv}).
+    \item \textbf{src/model/}: Contains scripts for data loading, Random Forest model training, and evaluation metric generation.
+    \item \textbf{src/inference/}: Contains the hybrid prediction scripts and legal concept rules for real-time analysis.
+    \item \textbf{src/ui/}: Contains the Streamlit components for visualizing the risk metrics and plotting interactive DataFrames.
+    \item \textbf{models/}: Stores the serialized \texttt{.pkl} files for the vectorizer and trained model.
+    \item \textbf{report/}: Contains the LaTeX project report and references.
+    \item \textbf{app.py}: The primary application entry point for the Streamlit dashboard.
+\end{itemize}
+
+\end{document}

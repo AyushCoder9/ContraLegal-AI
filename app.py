@@ -171,9 +171,15 @@ if vectorizer is None or model is None:
 # ---------------------------------------------------------------------------
 # Input parsing
 # ---------------------------------------------------------------------------
-clauses: list[str] = []
+if "analyzed_df" not in st.session_state:
+    st.session_state.analyzed_df = None
+if "contract_risk" not in st.session_state:
+    st.session_state.contract_risk = None
+if "summary_clauses" not in st.session_state:
+    st.session_state.summary_clauses = None
 
 if analyze_btn:
+    clauses = []
     if uploaded_file is not None:
         with st.spinner("Extracting text from PDF…"):
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
@@ -195,17 +201,26 @@ if analyze_btn:
     else:
         st.error("Please upload a PDF or paste some text in the sidebar.", icon="📝")
 
+    if clauses:
+        with st.spinner("Analysing clauses…"):
+            r_df = predict_hybrid(clauses, vectorizer, model)
+            r_df["risk_label"] = r_df["final_score"].apply(
+                lambda s: "High Risk" if s >= 0.5 else ("Medium Risk" if s >= 0.3 else "Low Risk")
+            )
+            c_risk = compute_contract_risk(r_df)
+            s_clauses = summarize_contract(clauses, top_n=5)
+            
+            st.session_state.analyzed_df = r_df
+            st.session_state.contract_risk = c_risk
+            st.session_state.summary_clauses = s_clauses
+
 # ---------------------------------------------------------------------------
 # Analysis & rendering
 # ---------------------------------------------------------------------------
-if clauses:
-    with st.spinner("Analysing clauses…"):
-        results_df = predict_hybrid(clauses, vectorizer, model)
-        results_df["risk_label"] = results_df["final_score"].apply(
-            lambda s: "High Risk" if s >= 0.5 else ("Medium Risk" if s >= 0.3 else "Low Risk")
-        )
-        contract_risk = compute_contract_risk(results_df)
-        summary_clauses = summarize_contract(clauses, top_n=5)
+if st.session_state.analyzed_df is not None:
+    results_df = st.session_state.analyzed_df
+    contract_risk = st.session_state.contract_risk
+    summary_clauses = st.session_state.summary_clauses
 
     # -- Contract-level risk banner
     render_contract_risk_banner(contract_risk)

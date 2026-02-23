@@ -40,6 +40,8 @@ data/processed/*
 
 models/*
 !models/.gitkeep
+!models/*.pkl
+!models/*.png
 
 # IDEs
 .idea/

@@ -14,10 +14,7 @@ def load_spacy_model():
 
     except OSError:
         print(f"spaCy model '{MODEL_NAME}' not found.")
-        print("Downloading model...")
-
-        subprocess.check_call(
-            [sys.executable, "-m", "spacy", "download", MODEL_NAME]
-        )
-
-        return spacy.load(MODEL_NAME)
+        print("Please ensure it is installed via requirements.txt")
+        # In Streamlit Cloud, subprocess downloads often fail due to permissions.
+        # It must be installed via the URL in requirements.txt.
+        raise RuntimeError(f"Model {MODEL_NAME} is missing. Add its URL to requirements.txt.")

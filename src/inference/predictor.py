@@ -1,3 +1,13 @@
+"""
+ContraLegal-AI — Hybrid Risk Predictor
+
+Supports two backends:
+  1. Legal-BERT (preferred) — loaded from models/legal_bert/
+  2. TF-IDF + Random Forest (fallback) — loaded from models/model.pkl
+
+Auto-detects which is available. BERT takes priority.
+"""
+
 from collections import Counter
 import json
 import os
@@ -13,9 +23,42 @@ from .inference_engine import RiskScorer
 
 MODEL_PATH = "models/model.pkl"
 VECTORIZER_PATH = "models/vectorizer.pkl"
+BERT_MODEL_DIR = "models/legal_bert"
+
+# ---------------------------------------------------------------------------
+# Model Loading
+# ---------------------------------------------------------------------------
+_bert_model_cache = None
+_bert_tokenizer_cache = None
+
+
+def _bert_available() -> bool:
+    """Check if a fine-tuned Legal-BERT model exists."""
+    return os.path.isdir(BERT_MODEL_DIR) and os.path.exists(
+        os.path.join(BERT_MODEL_DIR, "config.json")
+    )
+
+
+def load_bert_model():
+    """Load the fine-tuned Legal-BERT model and tokenizer (cached)."""
+    global _bert_model_cache, _bert_tokenizer_cache
+    if _bert_model_cache is not None:
+        return _bert_tokenizer_cache, _bert_model_cache
+
+    import torch
+    from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+    tokenizer = AutoTokenizer.from_pretrained(BERT_MODEL_DIR)
+    model = AutoModelForSequenceClassification.from_pretrained(BERT_MODEL_DIR)
+    model.eval()
+
+    _bert_tokenizer_cache = tokenizer
+    _bert_model_cache = model
+    return tokenizer, model
 
 
 def load_model():
+    """Load TF-IDF vectorizer + RandomForest (fallback model)."""
     if not os.path.exists(MODEL_PATH) or not os.path.exists(VECTORIZER_PATH):
         return None, None
     with open(VECTORIZER_PATH, "rb") as f:
@@ -25,13 +68,85 @@ def load_model():
     return vectorizer, model
 
 
-def _get_ml_scores(sentences: List[str], vectorizer, model) -> List[float]:
+def get_active_model_name() -> str:
+    """Return a human-readable name for the currently active model."""
+    if _bert_available():
+        return "Legal-BERT (Transformer)"
+    elif os.path.exists(MODEL_PATH):
+        return "TF-IDF + Random Forest"
+    return "No model loaded"
+
+
+# ---------------------------------------------------------------------------
+# ML Score Computation
+# ---------------------------------------------------------------------------
+def _get_ml_scores_bert(sentences: List[str]) -> List[float]:
+    """
+    Get risk scores from Legal-BERT.
+
+    BERT returns 3-class probabilities [P(Low), P(Medium), P(High)].
+    We derive a single risk score: 1 - P(Low Risk) = P(Medium) + P(High).
+    This is compatible with the existing hybrid scoring pipeline.
+    """
+    import torch
+
+    tokenizer, model = load_bert_model()
+
+    # Process in batches to avoid OOM on large contracts
+    batch_size = 32
+    all_scores = []
+
+    for i in range(0, len(sentences), batch_size):
+        batch = sentences[i : i + batch_size]
+        inputs = tokenizer(
+            batch,
+            truncation=True,
+            padding=True,
+            max_length=256,
+            return_tensors="pt",
+        )
+
+        with torch.no_grad():
+            outputs = model(**inputs)
+            proba = torch.nn.functional.softmax(outputs.logits, dim=-1)
+
+        # Risk score = 1 - P(Low Risk) = P(Medium) + P(High)
+        risk_scores = (1.0 - proba[:, 0]).tolist()
+        all_scores.extend(risk_scores)
+
+    return all_scores
+
+
+def _get_ml_scores_rf(sentences: List[str], vectorizer, model) -> List[float]:
+    """Get risk scores from TF-IDF + RandomForest."""
     tfidf_matrix = vectorizer.transform(sentences)
     if hasattr(model, "predict_proba"):
-        return model.predict_proba(tfidf_matrix)[:, 1].tolist()
+        proba = model.predict_proba(tfidf_matrix)
+        # For 3-class RF: risk = 1 - P(Low Risk)
+        # For 2-class RF: risk = P(class 1) — backward compat
+        if proba.shape[1] == 3:
+            return (1.0 - proba[:, 0]).tolist()
+        return proba[:, 1].tolist()
     return [float(p) for p in model.predict(tfidf_matrix)]
 
 
+def _get_ml_scores(sentences: List[str], vectorizer, model) -> List[float]:
+    """
+    Auto-select the best available model for scoring.
+    BERT takes priority if available.
+    """
+    if _bert_available():
+        try:
+            return _get_ml_scores_bert(sentences)
+        except Exception as e:
+            print(f"  ⚠ BERT inference failed ({e}), falling back to Random Forest")
+
+    return _get_ml_scores_rf(sentences, vectorizer, model)
+
+
+# ---------------------------------------------------------------------------
+# Hybrid Prediction Pipeline
+# ---------------------------------------------------------------------------
 def predict_hybrid(sentences: List[str], vectorizer, model) -> pd.DataFrame:
     scorer = RiskScorer()
     ml_scores = _get_ml_scores(sentences, vectorizer, model)

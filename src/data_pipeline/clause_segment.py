@@ -1,19 +1,16 @@
 from typing import List
-from src.utils.spacy_loader import load_spacy_model
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 class ClauseSegmenter:
-
     def __init__(self):
-        self.nlp = load_spacy_model()
+        self.splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=150,
+            separators=["\n\n", "\n", ". ", " ", ""]
+        )
 
     def segment(self, text: str) -> List[str]:
         if not text:
             return []
-
-        doc= self.nlp(text)
-        valid_clauses = [
-            sent.text.strip() for sent in doc.sents 
-            if len(sent.text.strip().split()) > 3
-        ]
-
-        return valid_clauses
+        chunks = self.splitter.split_text(text)
+        return [chunk.strip() for chunk in chunks if len(chunk.strip()) > 5]

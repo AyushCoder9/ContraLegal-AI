@@ -184,7 +184,7 @@ def render_risk_heatmap(results_df: pd.DataFrame, top_n: int = 10):
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family="Outfit, sans-serif"),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     # -- Interactive Clause Viewer --
     st.markdown("<br/>", unsafe_allow_html=True)
@@ -264,7 +264,7 @@ def render_keyword_frequency(keyword_frequency: List[dict]):
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family="Outfit, sans-serif"),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def render_risk_card(clause: str, label: str, kw_matches: List[dict] | None = None):

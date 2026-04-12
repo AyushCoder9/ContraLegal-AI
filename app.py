@@ -26,7 +26,7 @@ st.set_page_config(
     page_title="ContraLegal - Risk Dashboard",
     page_icon="C",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
 st.markdown(
@@ -209,11 +209,6 @@ st.markdown(
         margin: 2rem 0;
     }
 
-    /* ---- Hide sidebar toggle ---- */
-    [data-testid="collapsedControl"] {
-        display: none;
-    }
-
     /* ---- Download buttons ---- */
     .stDownloadButton > button {
         background: #1a1a1a !important;
@@ -298,19 +293,131 @@ st.markdown(
         line-height: 1.5;
     }
 
+    /* ---- Sidebar nav buttons ---- */
+    .nav-active {
+        background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+        color: #fff !important;
+        border: none !important;
+    }
+
     </style>
     """,
     unsafe_allow_html=True,
 )
 
 # ---------------------------------------------------------------------------
-# Brand header
+# Session state init
 # ---------------------------------------------------------------------------
-st.markdown('<div class="brand-name">ContraLegal</div>', unsafe_allow_html=True)
-st.markdown(
-    '<div class="brand-tagline">Intelligent Contract Risk Analysis</div>',
-    unsafe_allow_html=True,
-)
+if "analyzed_df" not in st.session_state:
+    st.session_state.analyzed_df = None
+if "contract_risk" not in st.session_state:
+    st.session_state.contract_risk = None
+if "summary_clauses" not in st.session_state:
+    st.session_state.summary_clauses = None
+if "current_view" not in st.session_state:
+    st.session_state.current_view = "dashboard"
+
+# GenAI state
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+if "vector_store" not in st.session_state:
+    st.session_state.vector_store = None
+if "chat_chain" not in st.session_state:
+    st.session_state.chat_chain = None
+if "raw_contract_text" not in st.session_state:
+    st.session_state.raw_contract_text = None
+if "llm_instance" not in st.session_state:
+    st.session_state.llm_instance = None
+if "contract_summary" not in st.session_state:
+    st.session_state.contract_summary = ""
+if "risk_brief" not in st.session_state:
+    st.session_state.risk_brief = ""
+if "explain_results" not in st.session_state:
+    st.session_state.explain_results = {}
+if "rewrite_results" not in st.session_state:
+    st.session_state.rewrite_results = {}
+
+# ---------------------------------------------------------------------------
+# Sidebar — Navigation + Settings
+# ---------------------------------------------------------------------------
+with st.sidebar:
+    st.markdown("### ContraLegal")
+    st.caption("Intelligent Contract Risk Analysis")
+    st.markdown("---")
+
+    # AI Settings — render FIRST so widget values are committed before nav buttons
+    with st.expander("AI Settings", expanded=False):
+        llm_provider = st.selectbox(
+            "LLM Provider",
+            ["Google Gemini (Free)", "Groq (Free)", "OpenAI"],
+            index=0,
+            key="llm_provider_select",
+        )
+
+        provider_map = {
+            "Google Gemini (Free)": ("gemini", "GOOGLE_API_KEY"),
+            "Groq (Free)": ("groq", "GROQ_API_KEY"),
+            "OpenAI": ("openai", "OPENAI_API_KEY"),
+        }
+        provider_key, env_key_name = provider_map[llm_provider]
+        st.session_state._provider_key = provider_key
+        env_key = os.environ.get(env_key_name, "")
+
+        # Seed the widget key from env var on first load
+        if "api_key_input" not in st.session_state and env_key:
+            st.session_state.api_key_input = env_key
+
+        st.text_input(
+            "API Key",
+            type="password",
+            key="api_key_input",
+        )
+        st.caption("Press Enter to save")
+
+    # Read state AFTER widgets have rendered
+    ai_enabled = bool(st.session_state.get("api_key_input", ""))
+    has_analysis = st.session_state.analyzed_df is not None
+
+    if ai_enabled:
+        st.success("AI enabled")
+    else:
+        st.info("No API key set")
+
+    st.markdown("---")
+
+    # Navigation
+    if st.button("Risk Dashboard", use_container_width=True,
+                 type="primary" if st.session_state.current_view == "dashboard" else "secondary"):
+        st.session_state.current_view = "dashboard"
+        st.rerun()
+
+    if ai_enabled and has_analysis:
+        if st.button("AI Assistant", use_container_width=True,
+                     type="primary" if st.session_state.current_view == "assistant" else "secondary"):
+            st.session_state.current_view = "assistant"
+            st.rerun()
+    elif not ai_enabled and has_analysis:
+        st.caption("Add an API key to unlock AI Assistant")
+
+# Rebuild LLM when provider or key changes
+provider_key = st.session_state.get("_provider_key", "gemini")
+api_key = st.session_state.get("api_key_input", "")
+ai_enabled = bool(api_key)
+_current_llm_id = f"{provider_key}:{api_key}"
+if ai_enabled and st.session_state.get("_llm_id") != _current_llm_id:
+    from src.inference.llm_engine import get_llm, create_chat_chain
+    try:
+        llm = get_llm(provider=provider_key, api_key=api_key)
+        st.session_state.llm_instance = llm
+        st.session_state._llm_id = _current_llm_id
+        if st.session_state.vector_store is not None:
+            st.session_state.chat_chain = create_chat_chain(
+                st.session_state.vector_store, llm,
+                st.session_state.get("contract_summary", ""),
+                st.session_state.get("risk_brief", ""),
+            )
+    except Exception as e:
+        st.sidebar.warning(f"Could not connect to {llm_provider}: {e}")
 
 # ---------------------------------------------------------------------------
 # Model load
@@ -326,14 +433,13 @@ if vectorizer is None or model is None:
     st.stop()
 
 # ---------------------------------------------------------------------------
-# Input section & Hero
+# Brand header + Input (always visible)
 # ---------------------------------------------------------------------------
-if "analyzed_df" not in st.session_state:
-    st.session_state.analyzed_df = None
-if "contract_risk" not in st.session_state:
-    st.session_state.contract_risk = None
-if "summary_clauses" not in st.session_state:
-    st.session_state.summary_clauses = None
+st.markdown('<div class="brand-name">ContraLegal</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="brand-tagline">Intelligent Contract Risk Analysis</div>',
+    unsafe_allow_html=True,
+)
 
 # Show Hero Section only if no analysis has been done yet
 if st.session_state.analyzed_df is None:
@@ -387,21 +493,24 @@ st.markdown('<hr class="clean-divider">', unsafe_allow_html=True)
 # ---------------------------------------------------------------------------
 if analyze_btn_upload or analyze_btn_paste or analyze_btn_demo:
     clauses = []
-    
+
     if analyze_btn_demo:
         from src.utils.dummy_contract import DEMO_CONTRACT_TEXT
+        st.session_state.raw_contract_text = DEMO_CONTRACT_TEXT.strip()
         clauses = [
             line.strip()
             for line in DEMO_CONTRACT_TEXT.strip().split("\n")
             if len(line.strip()) > 10
         ]
-        
+
     elif analyze_btn_upload and uploaded_file is not None:
         with st.spinner("Extracting text from PDF..."):
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
                 tmp.write(uploaded_file.getvalue())
                 tmp_path = tmp.name
             try:
+                from src.data_pipeline.pdf_extractor import PDFExtractor
+                st.session_state.raw_contract_text = PDFExtractor().extract_text(tmp_path)
                 pipeline = DataPipeline()
                 clauses = pipeline.process_document(tmp_path)
             finally:
@@ -409,6 +518,7 @@ if analyze_btn_upload or analyze_btn_paste or analyze_btn_demo:
                     os.remove(tmp_path)
 
     elif analyze_btn_paste and pasted_text.strip():
+        st.session_state.raw_contract_text = pasted_text.strip()
         clauses = [
             line.strip()
             for line in pasted_text.strip().split("\n")
@@ -430,18 +540,48 @@ if analyze_btn_upload or analyze_btn_paste or analyze_btn_demo:
             st.session_state.contract_risk = c_risk
             st.session_state.summary_clauses = s_clauses
 
-# ---------------------------------------------------------------------------
-# Analysis & rendering
-# ---------------------------------------------------------------------------
-if st.session_state.analyzed_df is not None:
+        # Build RAG index for the new document
+        if ai_enabled and st.session_state.raw_contract_text:
+            with st.spinner("Building AI knowledge base..."):
+                from src.inference.llm_engine import (
+                    build_vector_store, create_chat_chain, generate_contract_summary,
+                    generate_risk_brief, get_llm,
+                )
+                try:
+                    vs = build_vector_store(st.session_state.raw_contract_text)
+                    st.session_state.vector_store = vs
+                    _pk = st.session_state.get("_provider_key", "gemini")
+                    _ak = st.session_state.get("api_key_input", "")
+                    llm = get_llm(provider=_pk, api_key=_ak)
+                    st.session_state.llm_instance = llm
+                    summary = generate_contract_summary(
+                        st.session_state.raw_contract_text, llm,
+                    )
+                    st.session_state.contract_summary = summary
+                    brief = generate_risk_brief(r_df, c_risk)
+                    st.session_state.risk_brief = brief
+                    st.session_state.chat_chain = create_chat_chain(
+                        vs, llm, summary, brief,
+                    )
+                except Exception as e:
+                    st.warning(f"AI features unavailable: {e}")
+            # Reset caches for new document
+            st.session_state.chat_history = []
+            st.session_state.explain_results = {}
+            st.session_state.rewrite_results = {}
+
+        st.session_state.current_view = "dashboard"
+        st.rerun()
+
+# ===========================================================================
+# VIEW: Risk Dashboard
+# ===========================================================================
+if st.session_state.analyzed_df is not None and st.session_state.current_view == "dashboard":
     results_df = st.session_state.analyzed_df
     contract_risk = st.session_state.contract_risk
     summary_clauses = st.session_state.summary_clauses
 
-    # -- Contract-level risk banner
     render_contract_risk_banner(contract_risk)
-
-    # -- Executive summary (collapsible)
     render_executive_summary(summary_clauses)
 
     st.markdown('<hr class="clean-divider">', unsafe_allow_html=True)
@@ -454,7 +594,7 @@ if st.session_state.analyzed_df is not None:
     with col_chart:
         st.markdown('<div class="section-title">Risk Distribution</div>', unsafe_allow_html=True)
         fig_pie = render_pie_chart(results_df)
-        st.plotly_chart(fig_pie, use_container_width=True)
+        st.plotly_chart(fig_pie, width="stretch")
 
     with col_heatmap:
         st.markdown('<div class="section-title">Top 10 Riskiest Clauses</div>', unsafe_allow_html=True)
@@ -527,7 +667,152 @@ if st.session_state.analyzed_df is not None:
             use_container_width=True,
         )
 
-else:
+# ===========================================================================
+# VIEW: AI Assistant
+# ===========================================================================
+elif st.session_state.analyzed_df is not None and st.session_state.current_view == "assistant":
+    results_df = st.session_state.analyzed_df
+
+    st.markdown('<div class="section-title">AI Contract Assistant</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="section-caption">'
+        "Analyze risky clauses and ask questions about your contract."
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+    # -- Clause Analyzer --
+    st.markdown('<hr class="clean-divider">', unsafe_allow_html=True)
+    st.markdown("#### Clause Analyzer")
+    st.caption("Select a risky clause to get an AI explanation or a fairer rewrite.")
+
+    risky = results_df[results_df["risk_label"].isin(["High Risk", "Medium Risk"])].copy()
+
+    if risky.empty:
+        st.info("No high or medium risk clauses found in this contract.")
+    else:
+        clause_options = {}
+        for _, row in risky.iterrows():
+            label_tag = "HIGH" if row["risk_label"] == "High Risk" else "MED"
+            preview = row["clause_text"][:80].replace("\n", " ")
+            clause_options[f"[{label_tag}] {preview}..."] = int(row["clause_index"])
+
+        selected_label = st.selectbox(
+            "Select a clause to analyze",
+            list(clause_options.keys()),
+            label_visibility="collapsed",
+        )
+        selected_idx = clause_options[selected_label]
+        selected_row = risky[risky["clause_index"] == selected_idx].iloc[0]
+
+        # Show full clause text
+        with st.container(border=True):
+            risk_color = "#ef4444" if selected_row["risk_label"] == "High Risk" else "#f59e0b"
+            st.markdown(
+                f'<span style="color:{risk_color}; font-weight:700; font-size:0.75rem; '
+                f'text-transform:uppercase; letter-spacing:0.08em;">'
+                f'{selected_row["risk_label"]}</span>',
+                unsafe_allow_html=True,
+            )
+            st.markdown(selected_row["clause_text"])
+
+        col1, col2 = st.columns(2)
+        with col1:
+            explain_btn = st.button("Explain Risk", use_container_width=True, type="primary")
+        with col2:
+            rewrite_btn = st.button("Rewrite Clause", use_container_width=True, type="primary")
+
+        if explain_btn and st.session_state.llm_instance:
+            with st.spinner("Analyzing clause..."):
+                from src.inference.llm_engine import explain_clause
+                st.session_state.explain_results[selected_idx] = explain_clause(
+                    selected_row["clause_text"],
+                    selected_row["risk_label"],
+                    selected_row.get("keyword_flags", []),
+                    st.session_state.llm_instance,
+                )
+
+        if rewrite_btn and st.session_state.llm_instance:
+            with st.spinner("Rewriting clause..."):
+                from src.inference.llm_engine import rewrite_clause
+                st.session_state.rewrite_results[selected_idx] = rewrite_clause(
+                    selected_row["clause_text"],
+                    selected_row["risk_label"],
+                    selected_row.get("keyword_flags", []),
+                    st.session_state.llm_instance,
+                )
+
+        if selected_idx in st.session_state.explain_results:
+            with st.expander("AI Risk Explanation", expanded=True):
+                st.markdown(st.session_state.explain_results[selected_idx])
+
+        if selected_idx in st.session_state.rewrite_results:
+            with st.expander("AI Suggested Rewrite", expanded=True):
+                st.markdown(st.session_state.rewrite_results[selected_idx])
+
+    # -- Chat with Contract --
+    if st.session_state.chat_chain is not None:
+        st.markdown('<hr class="clean-divider">', unsafe_allow_html=True)
+        st.markdown("#### Chat with Your Contract")
+        st.caption(
+            "Ask questions about your contract. The AI retrieves relevant "
+            "sections and answers based on the actual document text."
+        )
+
+        # Render chat history
+        for human_msg, ai_msg in st.session_state.chat_history:
+            with st.chat_message("user"):
+                st.markdown(human_msg)
+            with st.chat_message("assistant"):
+                st.markdown(ai_msg)
+
+        # Chat input
+        if user_question := st.chat_input("Ask about your contract..."):
+            with st.chat_message("user"):
+                st.markdown(user_question)
+            with st.chat_message("assistant"):
+                with st.spinner("Searching contract..."):
+                    from src.inference.llm_engine import ask_question
+                    try:
+                        answer = ask_question(
+                            st.session_state.chat_chain,
+                            user_question,
+                            st.session_state.chat_history,
+                        )
+                        st.markdown(answer)
+                        st.session_state.chat_history.append((user_question, answer))
+                    except Exception as e:
+                        st.error(f"AI error: {e}")
+
+        # Suggested questions (only when chat is empty)
+        if not st.session_state.chat_history:
+            st.markdown("**Try asking:**")
+            suggestions = [
+                "What are the termination conditions?",
+                "Who owns the intellectual property?",
+                "What are the payment terms?",
+                "Are there any non-compete clauses?",
+            ]
+            cols = st.columns(2)
+            for i, suggestion in enumerate(suggestions):
+                with cols[i % 2]:
+                    if st.button(suggestion, key=f"suggest_{i}"):
+                        from src.inference.llm_engine import ask_question
+                        try:
+                            answer = ask_question(
+                                st.session_state.chat_chain,
+                                suggestion,
+                                st.session_state.chat_history,
+                            )
+                            st.session_state.chat_history.append((suggestion, answer))
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"AI error: {e}")
+
+# ===========================================================================
+# No analysis yet
+# ===========================================================================
+elif st.session_state.analyzed_df is None:
     st.markdown(
         '<div style="text-align:center; color:#aaa; padding:4rem 0; font-size:1rem;">'
         "Upload a PDF or paste contract text above, then click <strong>Analyse Risk</strong>."

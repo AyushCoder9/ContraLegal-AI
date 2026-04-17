@@ -1,12 +1,3 @@
-"""
-ContraLegal-AI — Legal-BERT Fine-Tuning (3-Class Risk Classification)
-
-Fine-tunes nlpaueb/legal-bert-base-uncased on a 3-class clause risk dataset.
-Classes: Low Risk (0), Medium Risk (1), High Risk (2)
-
-Works on CPU, MPS (Apple Silicon), and CUDA (GPU).
-For best performance, use Google Colab with a free GPU runtime.
-"""
 
 import os
 import random
@@ -25,9 +16,7 @@ from transformers import (
     TrainingArguments,
 )
 
-# ---------------------------------------------------------------------------
 # Constants
-# ---------------------------------------------------------------------------
 SEED = 42
 MODEL_NAME = "nlpaueb/legal-bert-base-uncased"
 MAX_LENGTH = 256
@@ -38,7 +27,7 @@ ID_TO_LABEL = {v: k for k, v in LABEL_MAP.items()}
 
 
 def set_seed(seed: int = SEED):
-    """Pin every random seed for full reproducibility."""
+    
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -46,9 +35,7 @@ def set_seed(seed: int = SEED):
         torch.cuda.manual_seed_all(seed)
 
 
-# ---------------------------------------------------------------------------
-# PyTorch Dataset
-# ---------------------------------------------------------------------------
+# Dataset
 class ClauseDataset(torch.utils.data.Dataset):
     def __init__(self, encodings, labels):
         self.encodings = encodings
@@ -63,11 +50,9 @@ class ClauseDataset(torch.utils.data.Dataset):
         return item
 
 
-# ---------------------------------------------------------------------------
-# Weighted Trainer (handles class imbalance)
-# ---------------------------------------------------------------------------
+# Trainer
 class WeightedTrainer(Trainer):
-    """Custom HF Trainer that applies class-weighted cross-entropy loss."""
+    
 
     def __init__(self, class_weights=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -85,9 +70,7 @@ class WeightedTrainer(Trainer):
         return (loss, outputs) if return_outputs else loss
 
 
-# ---------------------------------------------------------------------------
-# Main Training Function
-# ---------------------------------------------------------------------------
+# Training function
 def train_bert(
     df: pd.DataFrame,
     text_col: str = "clause_text",
@@ -100,26 +83,18 @@ def train_bert(
     test_size: float = 0.15,
     val_size: float = 0.15,
 ):
-    """
-    Fine-tune Legal-BERT for 3-class clause risk classification.
-
-    Returns:
-        y_test (np.ndarray): Integer test labels
-        y_pred (np.ndarray): Integer predicted labels
-        y_proba (np.ndarray): (n, 3) probability matrix
-        label_names (list[str]): ["Low Risk", "Medium Risk", "High Risk"]
-    """
+    
     set_seed(SEED)
 
     print(f"\n{'=' * 60}")
     print("  LEGAL-BERT FINE-TUNING — 3-Class Risk Classification")
     print(f"{'=' * 60}")
 
-    # --- Encode labels ---
+    # Encode
     texts = df[text_col].astype(str).tolist()
     labels = df[label_col].map(LABEL_MAP).tolist()
 
-    # --- Stratified Split: 70% train / 15% val / 15% test ---
+    # Split
     X_trainval, X_test, y_trainval, y_test = train_test_split(
         texts, labels, test_size=test_size, random_state=SEED, stratify=labels,
     )
@@ -130,7 +105,7 @@ def train_bert(
 
     print(f"  Train: {len(X_train):,} | Val: {len(X_val):,} | Test: {len(X_test):,}")
 
-    # --- Device ---
+    # Device
     if torch.cuda.is_available():
         device = "cuda"
     elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
@@ -140,7 +115,7 @@ def train_bert(
     print(f"  Device: {device}")
     use_fp16 = device == "cuda"
 
-    # --- Tokenize ---
+    # Tokenize
     print(f"  Loading tokenizer: {MODEL_NAME}")
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
@@ -152,12 +127,12 @@ def train_bert(
     val_dataset   = ClauseDataset(val_enc, y_val)
     test_dataset  = ClauseDataset(test_enc, y_test)
 
-    # --- Class weights (handles imbalance) ---
+    # Weights
     cw = compute_class_weight("balanced", classes=np.array([0, 1, 2]), y=np.array(y_train))
     class_weights = torch.tensor(cw, dtype=torch.float32)
     print(f"  Class weights: Low={cw[0]:.3f}  Med={cw[1]:.3f}  High={cw[2]:.3f}")
 
-    # --- Load Model ---
+    # Load
     print(f"  Loading model: {MODEL_NAME}")
     model = AutoModelForSequenceClassification.from_pretrained(
         MODEL_NAME,
@@ -166,7 +141,7 @@ def train_bert(
         label2id=LABEL_MAP,
     )
 
-    # --- Training Arguments ---
+    # Args
     ckpt_dir = os.path.join(output_dir, "checkpoints")
     training_args = TrainingArguments(
         output_dir=ckpt_dir,
@@ -195,7 +170,7 @@ def train_bert(
             "f1_macro": f1_score(labs, preds, average="macro"),
         }
 
-    # --- Train ---
+    # Train
     trainer = WeightedTrainer(
         class_weights=class_weights,
         model=model,
@@ -209,7 +184,7 @@ def train_bert(
     print("\n  Training started...\n")
     trainer.train()
 
-    # --- Evaluate on Test Set ---
+    # Evaluate
     print(f"\n{'=' * 60}")
     print("  TEST SET EVALUATION")
     print(f"{'=' * 60}")
@@ -226,7 +201,7 @@ def train_bert(
 
     print(classification_report(y_test_arr, test_preds, target_names=label_names))
 
-    # --- Save Model + Tokenizer ---
+    # Save
     os.makedirs(output_dir, exist_ok=True)
     model.save_pretrained(output_dir)
     tokenizer.save_pretrained(output_dir)

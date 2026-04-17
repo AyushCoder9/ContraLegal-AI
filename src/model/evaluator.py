@@ -1,11 +1,3 @@
-"""
-ContraLegal-AI — Model Evaluation Suite
-
-Generates:
-  - Confusion Matrices (per model)
-  - Multi-class ROC-AUC Curves (One-vs-Rest)
-  - Ablation Study Table (Random Forest vs Legal-BERT)
-"""
 
 import os
 import pickle
@@ -29,22 +21,20 @@ from sklearn.metrics import (
 from sklearn.preprocessing import label_binarize
 
 
-# ---------- Label helpers ----------
+# Labels
 LABEL_ORDER = ["Low Risk", "Medium Risk", "High Risk"]
 LABEL_TO_INT = {l: i for i, l in enumerate(LABEL_ORDER)}
 
 
 def _to_int(arr):
-    """Convert string labels to integers if needed."""
+    
     arr = np.asarray(arr)
     if arr.dtype.kind in ("U", "S", "O"):
         return np.array([LABEL_TO_INT[str(x)] for x in arr])
     return arr.astype(int)
 
 
-# =====================================================================
-# 1 · Confusion Matrix  (original function, kept for backward compat)
-# =====================================================================
+# Conf Matrix
 def evaluate_and_save_metrics(y_test, y_pred, unique_labels):
     unique_labels = sorted(unique_labels)
 
@@ -79,22 +69,9 @@ def evaluate_and_save_metrics(y_test, y_pred, unique_labels):
     return f1, cm
 
 
-# =====================================================================
-# 2 · Comprehensive Metric Computation
-# =====================================================================
+# Metrics
 def compute_full_metrics(y_test, y_pred, y_proba=None, label_names=None):
-    """
-    Compute a complete metrics dictionary for one model.
-
-    Args:
-        y_test: ground-truth labels (int or string)
-        y_pred: predicted labels   (int or string)
-        y_proba: (n, num_classes) probability matrix, optional
-        label_names: e.g. ["Low Risk", "Medium Risk", "High Risk"]
-
-    Returns:
-        dict with accuracy, f1_weighted, f1_macro, per-class P/R, roc_auc_macro
-    """
+    
     if label_names is None:
         label_names = LABEL_ORDER
 
@@ -130,22 +107,11 @@ def compute_full_metrics(y_test, y_pred, y_proba=None, label_names=None):
     return metrics
 
 
-# =====================================================================
-# 3 · ROC-AUC Curve Plotter (Multi-class One-vs-Rest)
-# =====================================================================
+# ROC
 def plot_roc_curves(
     y_test, y_proba, label_names=None, model_name="Model", save_path="models/roc_curve.png"
 ):
-    """
-    Plot per-class ROC curves + micro/macro averages for a 3-class classifier.
-
-    Args:
-        y_test: integer labels
-        y_proba: (n, 3) probability matrix
-        label_names: class names
-        model_name: title prefix
-        save_path: where to save the PNG
-    """
+    
     if label_names is None:
         label_names = LABEL_ORDER
 
@@ -199,18 +165,9 @@ def plot_roc_curves(
     return {name: round(auc_all[i], 4) for i, name in enumerate(label_names)}, round(macro_auc, 4)
 
 
-# =====================================================================
-# 4 · Ablation Study Table (RF vs BERT)
-# =====================================================================
+# Ablation
 def generate_ablation_table(rf_metrics: dict, bert_metrics: dict, save_path="models/ablation_study.png"):
-    """
-    Generate a visual comparison table between Random Forest and Legal-BERT.
-
-    Args:
-        rf_metrics: dict from compute_full_metrics (RF)
-        bert_metrics: dict from compute_full_metrics (BERT)
-        save_path: output PNG path
-    """
+    
     rows = [
         ("Accuracy",               rf_metrics.get("accuracy"),         bert_metrics.get("accuracy")),
         ("Weighted F1",            rf_metrics.get("f1_weighted"),      bert_metrics.get("f1_weighted")),
@@ -289,11 +246,9 @@ def generate_ablation_table(rf_metrics: dict, bert_metrics: dict, save_path="mod
     print(f"  ✓ Ablation study saved → {save_path}")
 
 
-# =====================================================================
-# 5 · Confusion Matrix (branded, per-model)
-# =====================================================================
+# Conf Matrix
 def save_confusion_matrix(y_test, y_pred, label_names=None, model_name="Model", save_path="models/confusion_matrix.png"):
-    """Save a branded confusion matrix plot for any model."""
+    
     if label_names is None:
         label_names = LABEL_ORDER
     y_t = _to_int(y_test)
@@ -310,9 +265,7 @@ def save_confusion_matrix(y_test, y_pred, label_names=None, model_name="Model", 
     print(f"  ✓ Confusion matrix saved → {save_path}")
 
 
-# =====================================================================
-# 6 · Save Artifacts (kept for backward compat)
-# =====================================================================
+# Save
 def save_artifacts(vectorizer, model, vec_path="models/vectorizer.pkl", model_path="models/model.pkl"):
     os.makedirs(os.path.dirname(vec_path), exist_ok=True)
 

@@ -1,12 +1,3 @@
-"""
-ContraLegal-AI — Model Training Orchestrator
-
-Trains both the Random Forest baseline and (optionally) Legal-BERT,
-then runs the full comparative evaluation.
-
-Usage:
-    python -m src.model_trainer
-"""
 
 from src.model.data_loader import load_real_data
 from src.model.trainer import train_model
@@ -23,17 +14,12 @@ if __name__ == "__main__":
     print("\n🔧  ContraLegal-AI — Model Training Pipeline (V2)")
     print("─" * 60)
 
-    # ---- Load 3-class dataset ----
+    # Load dataset
     df = load_real_data()
     print(f"  Dataset loaded: {len(df):,} samples")
     print(f"  Label distribution:\n{df['risk_label'].value_counts().to_string()}\n")
 
-    # ==================================================================
-    # PHASE 1: Random Forest Baseline
-    # ==================================================================
-    print("━" * 60)
-    print("  PHASE 1 — TF-IDF + Random Forest (Baseline)")
-    print("━" * 60)
+    # RF Baseline
 
     vectorizer, model, y_test_rf, y_pred_rf, y_proba_rf, unique_labels = train_model(df)
 
@@ -47,10 +33,7 @@ if __name__ == "__main__":
 
     print(f"\n  RF Metrics: {rf_metrics}\n")
 
-    # ==================================================================
-    # PHASE 2: Legal-BERT (if PyTorch is available)
-    # ==================================================================
-    bert_metrics = None
+    # Legal-BERT
     try:
         import torch
         print("━" * 60)
@@ -72,9 +55,7 @@ if __name__ == "__main__":
         print("    Train on Google Colab using: notebooks/train_legal_bert_colab.py")
         print("    Then copy models/legal_bert/ to this project.\n")
 
-    # ==================================================================
-    # PHASE 3: Ablation Study Comparison
-    # ==================================================================
+    # Ablation
     if bert_metrics is not None:
         print("━" * 60)
         print("  PHASE 3 — Ablation Study: RF vs Legal-BERT")

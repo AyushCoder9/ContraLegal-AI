@@ -15,7 +15,7 @@ def load_real_data(csv_path: str = "data/raw/legal_docs_modified.csv") -> pd.Dat
 
     df = df.dropna(subset=['clause_text', 'clause_status'])
 
-    # Smart Heuristic for 3-Class Risk (Low, Medium, High)
+    # Risk Heuristic
     keyword_engine = KeywordEngine()
     
     def determine_risk(row):
@@ -25,13 +25,13 @@ def load_real_data(csv_path: str = "data/raw/legal_docs_modified.csv") -> pd.Dat
         if status == 0:
             return "Low Risk"
             
-        # For risky clauses (status == 1), split into Medium vs High
+        # Medium vs High
         kw_matches = keyword_engine.extract_keywords_with_positions(text)
         
-        # Calculate a basic risk intensity score
+        # Base limit
         total_kw_weight = sum(m["weight"] for m in kw_matches)
         
-        # If the clause has high keyword weight OR is very long with some risk
+        # Condition
         if total_kw_weight >= 1.5 or (len(text) > 400 and total_kw_weight >= 1.0):
             return "High Risk"
         else:

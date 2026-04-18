@@ -1,43 +1,7 @@
-"""
-============================================================================
-ContraLegal-AI — Legal-BERT Fine-Tuning (Google Colab Script)
-============================================================================
-
-HOW TO USE THIS ON GOOGLE COLAB:
-1. Open https://colab.research.google.com
-2. Click Runtime → Change runtime type → GPU (T4 is free)
-3. Create a new notebook
-4. Paste this ENTIRE file into ONE cell and run it
-5. When prompted, upload your 'legal_docs_modified.csv' file
-6. Training will run (~15-20 min on T4 GPU)
-7. Download the 'legal_bert_model.zip' file when it's done
-
-AFTER COLAB - HOW TO GET THE MODEL BACK:
-1. The script will auto-download 'legal_bert_model.zip'
-2. Unzip it into your project: models/legal_bert/
-   Your folder should look like:
-     models/
-       legal_bert/
-         config.json
-         model.safetensors
-         tokenizer.json
-         tokenizer_config.json
-         special_tokens_map.json
-         vocab.txt
-3. Run: python -m src.model_trainer
-   This will generate the ROC curves + ablation study with your trained model.
-4. Run: streamlit run app.py
-   The app will auto-detect and use Legal-BERT!
-
-============================================================================
-"""
-
-# ── Cell 1: Install Dependencies ──────────────────────────────────────────
 import subprocess, sys
 subprocess.check_call([sys.executable, "-m", "pip", "install", "-q",
     "torch", "transformers", "accelerate", "scikit-learn", "pandas", "tqdm"])
 
-# ── Cell 2: Upload CSV ───────────────────────────────────────────────────
 import os, re, random, shutil
 import numpy as np
 import pandas as pd
@@ -66,8 +30,7 @@ df = pd.read_csv(csv_filename)
 print(f"✅ Loaded {len(df):,} rows")
 print(df.columns.tolist())
 
-# ── Cell 3: 3-Class Data Labeling ────────────────────────────────────────
-# Embedded keywords for the risk heuristic (same as project's keywords.json)
+# Keywords
 RISK_KEYWORDS = {
     "indemnity": 0.9, "indemnify": 0.9, "indemnification": 0.9, "indemnified": 0.8,
     "termination for convenience": 1.0, "termination for cause": 0.9,
@@ -114,7 +77,6 @@ df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 print("\n📊 3-Class Distribution:")
 print(df["risk_label"].value_counts())
 
-# ── Cell 4: Constants & Setup ────────────────────────────────────────────
 SEED = 42
 MODEL_NAME = "nlpaueb/legal-bert-base-uncased"
 MAX_LENGTH = 256
@@ -137,7 +99,6 @@ print(f"\n🖥️  Device: {device}")
 if device == "cuda":
     print(f"   GPU: {torch.cuda.get_device_name(0)}")
 
-# ── Cell 5: Prepare Data ────────────────────────────────────────────────
 texts = df["clause_text"].astype(str).tolist()
 labels = df["risk_label"].map(LABEL_MAP).tolist()
 
@@ -180,7 +141,6 @@ cw = compute_class_weight("balanced", classes=np.array([0, 1, 2]), y=np.array(y_
 class_weights = torch.tensor(cw, dtype=torch.float32)
 print(f"  Class weights: Low={cw[0]:.3f}  Med={cw[1]:.3f}  High={cw[2]:.3f}")
 
-# ── Cell 6: Model & Training ────────────────────────────────────────────
 print(f"\n🤖 Loading model: {MODEL_NAME}")
 model = AutoModelForSequenceClassification.from_pretrained(
     MODEL_NAME, num_labels=3, id2label=ID_TO_LABEL, label2id=LABEL_MAP
@@ -241,7 +201,6 @@ trainer = WeightedTrainer(
 print("\n🚀 Training started...\n")
 trainer.train()
 
-# ── Cell 7: Evaluate on Test Set ─────────────────────────────────────────
 print(f"\n{'='*60}")
 print("  TEST SET EVALUATION")
 print(f"{'='*60}")
@@ -257,7 +216,6 @@ y_test_arr = np.array(y_test)
 label_names = ["Low Risk", "Medium Risk", "High Risk"]
 print(classification_report(y_test_arr, test_preds, target_names=label_names))
 
-# ── Cell 8: Save & Download Model ───────────────────────────────────────
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 model.save_pretrained(OUTPUT_DIR)
 tokenizer.save_pretrained(OUTPUT_DIR)

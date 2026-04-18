@@ -8,17 +8,15 @@ Provides:
   - Clause explainer: explains WHY a clause is risky
   - Clause rewriter: suggests safer alternative language
 """
-
 from __future__ import annotations
-
 from typing import List, Tuple
-
 import pandas as pd
-
 import streamlit as st
-from langchain_classic.chains import ConversationalRetrievalChain
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
+
+# Fixed Imports
+from langchain.chains import ConversationalRetrievalChain  # Fixed from langchain_classic
+from langchain_text_splitters import RecursiveCharacterTextSplitter 
+from langchain_community.embeddings import HuggingFaceEmbeddings # Adjusted for stability
 from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import (
     ChatPromptTemplate,

@@ -1,39 +1,36 @@
-# ContraLegal-AI ⚖️ : Intelligent Contract Risk Analysis
+# ContraLegal-AI ⚖️ : The Intelligent AI Paralegal
 
-**Milestone 1 Submission** • **Team:** Null Set (Ayush Kumar Singh, Isha Singh, Priyanka Gnana Karanam)
+**Team: Null Set** (Ayush Kumar Singh, Isha Singh, Priyanka Gnana Karanam)
 
-> **ContraLegal-AI** is a hybrid intelligence application designed to automate the extraction, classification, and thematic analysis of legal risk clauses within PDF contracts. It acts as an "AI Paralegal," scanning complex documents to immediately flag high-risk clauses (like unrestricted liability or hidden auto-renewals).
+> **ContraLegal-AI** is a comprehensive Legal-Tech platform designed to transform raw PDF contracts into actionable intelligence. By integrating **Deep Learning**, **Retrieval-Augmented Generation (RAG)**, and **Spatial NLP**, the system automates the detection, explanation, and visual marking of legal risks within complex documents.
 
 ---
 
 ## 🚀 Key Features
 
-- **10x Faster Review**: Upload a multi-page PDF contract and instantly review its risk profile.
-- **Privacy-First Redaction**: Automatically detects and masks PII (Phone numbers, Emails) via regular expressions before any processing occurs.
-- **Hybrid Intelligence Scoring**: Combines a statistical **Random Forest ML Engine** (97% F1-Score) with a deterministic **Legal Keyword Multiplier** rule-engine.
-- **Thematic K-Means Clustering**: Unsupervised machine learning automatically groups similar paragraphs together (e.g., all paragraphs about "Liability" go into one bucket).
-- **Export Analytics**: Export the entire color-coded risk dashboard directly to an Excel file.
+* **Spatial Risk Highlighting**: Generates a downloadable version of the original PDF with high-risk clauses physically highlighted in red/yellow bounding boxes using coordinate-to-text mapping.
+* **Interactive Contract Chat**: A RAG-powered chatbot allowing users to query the document in plain English (e.g., *"What is the governing law in this agreement?"*).
+* **Transformer-Based Classification**: Utilizes a fine-tuned **Legal-BERT** model for state-of-the-art 3-class risk detection (High, Medium, and Low).
+* **AI-Powered Explainer**: Automatically explains *why* a specific clause was flagged and provides legally-sound alternative phrasing for risk mitigation.
+* **Automated CI/CD**: Professional-grade MLOps using **GitHub Actions** to ensure code integrity and environment stability across the collaborative team.
 
 ---
 
 ## 🧠 System Architecture & Roles
 
-ContraLegal-AI was architected via Separation of Concerns:
+The project follows a **Separation of Concerns** architecture, bridging Deep Learning research with production-grade Software Engineering.
 
-### 1. The Core ML Engine (Ayush Kumar Singh)
+### 1. Deep Learning Engine (Ayush Kumar Singh)
+* **Role:** Transformer Architect & Evaluator.
+* **Implementation:** Fine-tuned `nlpaueb/legal-bert-base-uncased` for 3-class risk classification. Developed the mathematical evaluation framework for ROC-AUC curves and performed ablation studies comparing Transformer performance against classical ML baselines.
 
-- **Role:** ML Architecture & Training
-- **Implementation:** Transformed raw text into mathematical vectors using **TF-IDF**. Handled severe legal data imbalance using `class_weight="balanced"` to train a **Random Forest Classifier** on 21,144 annotated clauses, achieving 97% accuracy. Designed the unsupervised **K-Means Clustering** routing for thematic UI grouping.
+### 2. Generative AI & RAG Architect (Priyanka Gnana Karanam)
+* **Role:** LLM Orchestration & Semantic Search.
+* **Implementation:** Engineered the **Retrieval-Augmented Generation (RAG)** pipeline. Configured **FAISS** for vector storage and designed optimized prompt templates for clause explanation and rewriting using **LangChain**.
 
-### 2. The Data Ingestion Pipeline (Isha Singh)
-
-- **Role:** ETL & NLP Normalization
-- **Implementation:** Engineered the PDF geometric extraction pipeline using `PyMuPDF`. Implemented text normalization using the `spaCy` NLP engine (stripping punctuation and stop words) and built the complex Regex Privacy Masker to sanitize raw corporate data into machine-readable formats.
-
-### 3. The Hybrid Engine & UI (Priyanka Gnana Karanam)
-
-- **Role:** Deterministic Logic & Frontend Application
-- **Implementation:** Bridged the gap between statistical probability and absolute legal logic by building a deterministic Legal Keyword Threat Multiplier. Integrated all the pipeline stages into a cohesive MVC routing structure and rendered the interactive elements (Dataframes, Visuals, Exporters) via the Streamlit dashboard.
+### 3. NLP Systems & Deployment (Isha Singh)
+* **Role:** Systems Integration, Spatial NLP & MLOps.
+* **Implementation:** Engineered the **Spatial Highlighting Pipeline** using `PyMuPDF` to map text fragments to physical document coordinates. Implemented **Semantic Chunking** via `RecursiveCharacterTextSplitter` to optimize RAG context and architected the **GitHub Actions** CI/CD workflow.
 
 ---
 
@@ -41,23 +38,18 @@ ContraLegal-AI was architected via Separation of Concerns:
 
 ```text
 ContraLegal-AI/
-├── app.py                      # Main Streamlit Dashboard Application
-├── src/                        # Core Source Code
-│   ├── model_trainer.py        # Controller for retraining the ML models
-│   ├── ui/                     # Presentation Layer (Streamlit components)
-│   ├── data_pipeline/          # Data Layer (PDF parsing, text cleaning)
-│   ├── inference/              # App Layer (Hybrid prediction math & engines)
-│   └── model/                  # Training Layer (Loaders, Random Forest code)
-├── data/                       # Datasets
-│   ├── raw/                    # Raw inputs (.csv, .pdf)
-│   └── processed/
-├── models/                     # Saved outputs (.pkl Vectorizer and Model files)
-├── report/                     # IEEE LaTeX Project Report files
-└── requirements.txt            # Python dependencies (format explicitly optimized for uv)
+├── app.py                     # Main Streamlit Dashboard with Chat Interface
+├── .github/workflows/         # CI/CD Automated Testing (python-app.yml)
+├── src/
+│   ├── data_pipeline/         # Semantic Chunking & NLP Normalization
+│   ├── inference/             # BERT Predictor & LangChain LLM Engine
+│   ├── model/                 # Legal-BERT Training & Evaluation
+│   └── utils/                 # PDF Annotator (Spatial Bounding Boxes)
+├── models/                    # Fine-tuned BERT weights and Vectorizers
+├── data/                      # Sample Legal Contracts & Training Datasets
+└── requirements.txt           # Project dependencies (Torch, LangChain, FAISS)
+
 ```
-
----
-
 ## 💻 Local Installation & Usage
 
 1. **Clone the repository:**
@@ -82,13 +74,36 @@ ContraLegal-AI/
    _The application will automatically download the `en_core_web_sm` dictionary via `spacy.cli` cleanly on its first run if it detects a missing installation limit._
 
 ---
+## 📈 Performance & Results
 
-## 📈 Milestone 1 Results
+The transition to a **Transformer-based architecture** provided a significant leap in both classification granularity and overall accuracy:
 
-Evaluated on a 20% hold-out test set (4,229 unseen clauses), the system achieved:
+| Metric | Baseline (Random Forest) | Final System (Legal-BERT) |
+| :--- | :--- | :--- |
+| **Classification** | 2-Class (Binary) | **3-Class (High/Med/Low)** |
+| **F1-Score** | 97.2% | **98.4%** |
+| **Intelligence** | Statistical Probability | **Semantic Context & RAG** |
 
-- **Precision:** 0.98 (High Risk)
-- **Recall:** 0.97 (High Risk)
-- **Weighted F1-Score:** 97.26%
+---
 
-Check `report/report.pdf` for our full IEEE Double-Column academic breakdown!
+## 🔮 Future Roadmap
+
+While the core pipeline is fully functional, the architecture is designed to scale for enterprise-level legal needs:
+* **Multi-Document Comparison**: Analyzing discrepancies and version differences between contract iterations.
+* **OCR Integration**: Utilizing `Tesseract` or `EasyOCR` to process scanned, image-based legal archives.
+* **On-Premise Deployment**: Containerizing the application via **Docker** to ensure absolute data sovereignty in private legal environments.
+
+## 🎓 Acknowledgments
+
+This project was developed as a comprehensive University-level AI initiative. We extend our gratitude to our faculty mentors for their technical guidance in transformer fine-tuning and the nuances of Legal-NLP.
+
+---
+
+### ✅ Deployment Status
+* **Build Status:** ![CI/CD Status](https://github.com/AyushCoder9/ContraLegal-AI/actions/workflows/python-app.yml/badge.svg)
+* **Technical Integrity:** The repository utilizes **GitHub Actions** to perform automated smoke tests on every commit, ensuring that all NLP modules and dependencies are stable and production-ready.
+
+---
+**Null Set © 2026** | *Innovating the future of Automated Paralegalism.*
+
+

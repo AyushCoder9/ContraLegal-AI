@@ -104,6 +104,11 @@ This project was developed as a comprehensive University-level AI initiative. We
 * **Technical Integrity:** The repository utilizes **GitHub Actions** to perform automated smoke tests on every commit, ensuring that all NLP modules and dependencies are stable and production-ready.
 
 ---
-**Null Set © 2026** | *Innovating the future of Automated Paralegalism.*
+<br/>
+
+<div align="center">
+  <p><b>Null Set © 2026</b></p>
+  <i>Innovating the future of Automated Paralegalism.</i>
+</div>
 
 

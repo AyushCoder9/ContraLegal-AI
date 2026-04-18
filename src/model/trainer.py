@@ -4,7 +4,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
-# Canonical label order (must match evaluator.py LABEL_ORDER)
+# Order
 LABEL_ORDER = ["Low Risk", "Medium Risk", "High Risk"]
 
 def train_model(
@@ -46,9 +46,7 @@ def train_model(
     clf.fit(X_train_tfidf, y_train)
     y_pred = clf.predict(X_test_tfidf)
     
-    # Probability matrix for ROC-AUC evaluation
-    # RF's clf.classes_ is alphabetical: ['High Risk', 'Low Risk', 'Medium Risk']
-    # Remap columns to canonical order: ['Low Risk', 'Medium Risk', 'High Risk']
+    # Adjust Order
     raw_proba = clf.predict_proba(X_test_tfidf)
     col_order = [list(clf.classes_).index(label) for label in LABEL_ORDER]
     y_proba = raw_proba[:, col_order]

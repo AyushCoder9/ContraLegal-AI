@@ -13,10 +13,8 @@ from typing import List, Tuple
 import pandas as pd
 import streamlit as st
 
-# Fixed Imports
-from langchain.chains import ConversationalRetrievalChain  # Fixed from langchain_classic
-from langchain_text_splitters import RecursiveCharacterTextSplitter 
-from langchain_community.embeddings import HuggingFaceEmbeddings # Adjusted for stability
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import (
     ChatPromptTemplate,
@@ -24,6 +22,8 @@ from langchain_core.prompts import (
     SystemMessagePromptTemplate,
 )
 from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -200,58 +200,55 @@ def generate_risk_brief(analyzed_df: pd.DataFrame, contract_risk: dict) -> str:
     return "\n".join(lines)
 
 
-# ---------------------------------------------------------------------------
 # RAG Chat
-# ---------------------------------------------------------------------------
 def create_chat_chain(
     vector_store: FAISS,
     llm,
     contract_summary: str = "",
     risk_brief: str = "",
-) -> ConversationalRetrievalChain:
-    """Build a conversational retrieval chain for contract Q&A."""
+):
     retriever = vector_store.as_retriever(
         search_type="similarity",
         search_kwargs={"k": 6},
     )
-
-    system_template = CHAT_SYSTEM_TEMPLATE.replace(
-        "{contract_summary}", contract_summary or "No summary available."
-    ).replace(
-        "{risk_brief}", risk_brief or "No risk analysis available."
-    )
-
-    return ConversationalRetrievalChain.from_llm(
-        llm=llm,
-        retriever=retriever,
-        return_source_documents=False,
-        verbose=False,
-        chain_type="stuff",
-        combine_docs_chain_kwargs={
-            "prompt": ChatPromptTemplate.from_messages([
-                SystemMessagePromptTemplate.from_template(system_template),
-                HumanMessagePromptTemplate.from_template("{question}"),
-            ])
-        },
-    )
+    return {"retriever": retriever, "llm": llm,
+            "contract_summary": contract_summary, "risk_brief": risk_brief}
 
 
 def ask_question(
-    chain: ConversationalRetrievalChain,
+    chain: dict,
     question: str,
     chat_history: List[Tuple[str, str]],
 ) -> str:
-    """Send a question to the RAG chain and return the answer."""
-    # Limit history to last N exchanges to prevent context overflow
-    recent_history = chat_history[-MAX_CHAT_HISTORY:]
+    retriever = chain["retriever"]
+    llm = chain["llm"]
+    contract_summary = chain.get("contract_summary", "")
+    risk_brief = chain.get("risk_brief", "")
 
-    lc_history = []
-    for human, ai in recent_history:
-        lc_history.append(HumanMessage(content=human))
-        lc_history.append(AIMessage(content=ai))
+    docs = retriever.invoke(question)
+    context = "\n\n".join(d.page_content for d in docs)
 
-    result = chain.invoke({"question": question, "chat_history": lc_history})
-    return result["answer"]
+    recent = chat_history[-MAX_CHAT_HISTORY:]
+    history_text = ""
+    for h, a in recent:
+        history_text += f"User: {h}\nAssistant: {a}\n"
+
+    system_msg = CHAT_SYSTEM_TEMPLATE.replace(
+        "{contract_summary}", contract_summary or "No summary available."
+    ).replace(
+        "{risk_brief}", risk_brief or "No risk analysis available."
+    ).replace("{context}", context)
+
+    messages = [{"role": "system", "content": system_msg}]
+    if history_text:
+        messages.append({"role": "user", "content": history_text.strip()})
+    messages.append({"role": "user", "content": question})
+
+    prompt = ChatPromptTemplate.from_messages(
+        [(m["role"], m["content"]) for m in messages]
+    )
+    chain_lcel = prompt | llm | StrOutputParser()
+    return chain_lcel.invoke({})
 
 
 # ---------------------------------------------------------------------------

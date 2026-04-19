@@ -32,8 +32,7 @@
 \author{
 \IEEEauthorblockN{Ayush Kumar Singh, Isha Singh, Priyanka Gnana Karanam}
 \IEEEauthorblockA{
-Department of Computer Science and Engineering \\
-SRM Institute of Science and Technology \\
+Newton School Of Technology \\
 \textit{Team: Null Set}}
 }
 
@@ -41,7 +40,7 @@ SRM Institute of Science and Technology \\
 
 % ABSTRACT
 \begin{abstract}
-Manual review of commercial contracts is a resource-intensive, error-prone, and expensive process that limits access to accurate legal risk assessment. ContraLegal-AI presents a full-stack intelligent legal-tech platform that automates the extraction, classification, explanation, and visual annotation of risk within PDF contracts. The system's architecture comprises three synergistic components: (1) a fine-tuned \texttt{nlpaueb/legal-bert-base-uncased} transformer for three-class risk classification (Low, Medium, High Risk), achieving 97.01\% accuracy and a macro ROC-AUC of 0.9948—surpassing a TF-IDF + Random Forest baseline by 2.57\%; (2) a Retrieval-Augmented Generation (RAG) pipeline using FAISS vector storage and LangChain for clause-level explanation, rewriting, and conversational contract querying; and (3) a Spatial NLP module leveraging PyMuPDF's coordinate-mapping API to physically annotate risky clauses within the original PDF document. A comprehensive ablation study demonstrates that Legal-BERT provides a critical +11.98\% improvement in High Risk Recall over classical methods—the most consequential metric in legal risk detection. The system is deployed as an interactive Streamlit application with full CI/CD via GitHub Actions.
+Manual review of commercial contracts is a resource-intensive, error-prone, and expensive process that limits access to accurate legal risk assessment. ContraLegal-AI presents a full-stack intelligent legal-tech platform that automates the extraction, classification, explanation, and visual annotation of risk within PDF contracts. The system's architecture comprises three synergistic components: (1) a fine-tuned \texttt{nlpaueb/legal-bert-base-uncased} transformer for three-class risk classification (Low, Medium, High Risk), achieving 97.01\% accuracy and a macro ROC-AUC of 0.9948---surpassing a TF-IDF + Random Forest baseline by 2.57\%; (2) a Retrieval-Augmented Generation (RAG) pipeline using FAISS vector storage and LangChain for clause-level explanation, rewriting, and conversational contract querying; and (3) a Spatial NLP module leveraging PyMuPDF's coordinate-mapping API to physically annotate risky clauses within the original PDF document. A comprehensive ablation study demonstrates that Legal-BERT provides a critical +11.98\% improvement in High Risk Recall over classical methods---the most consequential metric in legal risk detection. The system is deployed as an interactive Streamlit application with full CI/CD via GitHub Actions.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -51,7 +50,7 @@ Legal NLP, Transformer Fine-tuning, Legal-BERT, RAG, FAISS, Risk Classification,
 % 1. INTRODUCTION
 \section{Introduction}
 
-In modern commercial environments, legal teams must process vast volumes of contracts—Non-Disclosure Agreements (NDAs), Master Services Agreements (MSAs), Employment Contracts, and Merger and Acquisition documents—each containing clauses that may impose significant financial liability, asymmetric obligation, or unfavorable jurisdiction. The manual identification of such high-risk clauses demands deep legal expertise and is prohibitively time-consuming.
+In modern commercial environments, legal teams must process vast volumes of contracts---Non-Disclosure Agreements (NDAs), Master Services Agreements (MSAs), Employment Contracts, and Merger and Acquisition documents---each containing clauses that may impose significant financial liability, asymmetric obligation, or unfavorable jurisdiction. The manual identification of such high-risk clauses demands deep legal expertise and is prohibitively time-consuming.
 
 Prior work in legal text classification has predominantly relied on binary labeling schemes and bag-of-words statistical methods \cite{contract_review_old}. While effective for shallow risk detection, these approaches fail to capture the semantic nuance that differentiates a ``Medium Risk'' indemnity clause from a ``High Risk'' unlimited liability clause. Furthermore, they provide no mechanism for explanation, rewriting, or interactive querying.
 
@@ -260,7 +259,7 @@ ContraLegal-AI/
 |  |  |- trainer.py
 |  |  |- evaluator.py
 |  |  |- data_loader.py
-|  └── utils/
+|  |- utils/
 |     |- pdf_annotator.py
 |- models/
 |  |- legal_bert/

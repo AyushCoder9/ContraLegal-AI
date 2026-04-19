@@ -1,6 +1,6 @@
 <div align="center">
 
-![ContraLegal AI Banner](https://readme-typing-svg.demolab.com?font=Montserrat&size=45&pause=1000&color=4F46E5&center=true&vCenter=true&width=1000&height=100&lines=CONTRALEGAL+AI;INTELLIGENT+LEGAL+PARALEGAL;TRANSFORMER-BASED+RISK+ANALYSIS;RAG-POWERED+CONTRACT+INTELLIGENCE)
+![ContraLegal AI Banner](https://readme-typing-svg.demolab.com?font=Montserrat&size=45&pause=1000&color=F97316&center=true&vCenter=true&width=1000&height=100&lines=CONTRALEGAL+AI;AI-POWERED+LEGAL+ANALYST;TRANSFORMER-BASED+RISK+ANALYSIS;RAG-POWERED+CONTRACT+INTELLIGENCE)
 
 **Team Null Set**
 Ayush Kumar Singh | Isha Singh | Priyanka Gnana Karanam
@@ -11,8 +11,10 @@ Ayush Kumar Singh | Isha Singh | Priyanka Gnana Karanam
 [![CI/CD Status](https://github.com/AyushCoder9/ContraLegal-AI/actions/workflows/python-app.yml/badge.svg)](https://github.com/AyushCoder9/ContraLegal-AI/actions)
 [![Python Version](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
 [![Model Architecture](https://img.shields.io/badge/Architecture-Legal--BERT-6D28D9?style=flat&logo=huggingface&logoColor=white)](https://huggingface.co/nlpaueb/legal-bert-base-uncased)
+[![Vector DB](https://img.shields.io/badge/Vector--DB-FAISS-00599C?style=flat&logo=scipy&logoColor=white)](https://github.com/facebookresearch/faiss)
+[![LLM Proxy](https://img.shields.io/badge/LLM-Gemini_|_Groq-4285F4?style=flat&logo=google&logoColor=white)](https://ai.google.dev/)
+[![Spatial NLP](https://img.shields.io/badge/Spatial--NLP-PyMuPDF-FFD43B?style=flat)](https://github.com/pymupdf/PyMuPDF)
 [![Deployment](https://img.shields.io/badge/Platform-Streamlit_Cloud-FF4B4B?style=flat&logo=streamlit&logoColor=white)](https://contralegal-ai.streamlit.app)
-[![License](https://img.shields.io/badge/License-MIT-064E3B?style=flat)](LICENSE)
 
 </div>
 
@@ -20,7 +22,7 @@ Ayush Kumar Singh | Isha Singh | Priyanka Gnana Karanam
 
 ### Project Overview
 
-ContraLegal AI is an enterprise-grade legal technology ecosystem engineered to synthesize unstructured PDF contracts into multidimensional risk intelligence. By orchestrating a fine-tuned **Legal-BERT** transformer, **Retrieval-Augmented Generation (RAG)**, and **Spatial NLP**, the platform automates the identification, explainability, and physical annotation of legal liabilities with human-level nuance.
+ContraLegal AI is an autonomous legal intelligence platform engineered to transform unstructured contract data into actionable risk distributions. By synthesizing **Legal-BERT** transformer architectures with **Retrieval-Augmented Generation (RAG)**, the system provides granular multi-class risk scoring, automated redrafting, and spatial PDF highlights to eliminate manual bottlenecks in enterprise legal review.
 
 ---
 

@@ -1,5 +1,5 @@
-% IEEE Double-Column Template with Appendix
-% Compile: pdflatex → bibtex → pdflatex → pdflatex
+% ContraLegal-AI — IEEE Conference Paper
+% Compile: pdflatex -> bibtex -> pdflatex -> pdflatex
 
 \documentclass[conference]{IEEEtran}
 
@@ -17,7 +17,6 @@
 \usepackage{multirow}
 \usepackage{listings}
 
-% Code listing style
 \lstset{
   basicstyle=\ttfamily\small,
   breaklines=true,
@@ -27,162 +26,258 @@
 
 \begin{document}
 
-% ---------- TITLE ----------
-\title{ContraLegal-AI: Intelligent Contract Risk Analysis using Multi-Modal Natural Language Processing and Machine Learning}
+% TITLE
+\title{ContraLegal-AI: An Intelligent AI Paralegal for Automated Contract Risk Analysis using Transformer Models, Retrieval-Augmented Generation, and Spatial NLP}
 
 \author{
 \IEEEauthorblockN{Ayush Kumar Singh, Isha Singh, Priyanka Gnana Karanam}
 \IEEEauthorblockA{
-Null Set \\}
+Department of Computer Science and Engineering \\
+SRM Institute of Science and Technology \\
+\textit{Team: Null Set}}
 }
 
 \maketitle
 
-% ---------- ABSTRACT ----------
+% ABSTRACT
 \begin{abstract}
-Manual review of commercial contracts is a time-consuming, expensive, and error-prone process. ContraLegal-AI proposes a hybrid intelligence system designed to automate the extraction, classification, and thematic analysis of legal risk clauses within PDF contracts. By combining advanced Natural Language Processing (NLP) techniques, Term Frequency-Inverse Document Frequency (TF-IDF) vectorization, and a Random Forest classification algorithm, the system classifies clause-level risk with 97\% accuracy. Furthermore, we implement a rule-based Hybrid Decision Engine and Unsupervised K-Means clustering to provide robust thematic insights. This paper outlines the quantitative results, empirical evaluation, and system architecture for Milestone 1.
+Manual review of commercial contracts is a resource-intensive, error-prone, and expensive process that limits access to accurate legal risk assessment. ContraLegal-AI presents a full-stack intelligent legal-tech platform that automates the extraction, classification, explanation, and visual annotation of risk within PDF contracts. The system's architecture comprises three synergistic components: (1) a fine-tuned \texttt{nlpaueb/legal-bert-base-uncased} transformer for three-class risk classification (Low, Medium, High Risk), achieving 97.01\% accuracy and a macro ROC-AUC of 0.9948—surpassing a TF-IDF + Random Forest baseline by 2.57\%; (2) a Retrieval-Augmented Generation (RAG) pipeline using FAISS vector storage and LangChain for clause-level explanation, rewriting, and conversational contract querying; and (3) a Spatial NLP module leveraging PyMuPDF's coordinate-mapping API to physically annotate risky clauses within the original PDF document. A comprehensive ablation study demonstrates that Legal-BERT provides a critical +11.98\% improvement in High Risk Recall over classical methods—the most consequential metric in legal risk detection. The system is deployed as an interactive Streamlit application with full CI/CD via GitHub Actions.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Natural Language Processing, Machine Learning, Contract Analysis, Risk Classification, TF-IDF, Random Forest.
+Legal NLP, Transformer Fine-tuning, Legal-BERT, RAG, FAISS, Risk Classification, Contract Analysis, Spatial NLP, PyMuPDF, LangChain.
 \end{IEEEkeywords}
 
-% ---------- INTRODUCTION ----------
+% 1. INTRODUCTION
 \section{Introduction}
-In the modern corporate landscape, legal departments are inundated with complex contracts, such as Non-Disclosure Agreements (NDAs), Mergers and Acquisitions (M\&A) contracts, and Service Level Agreements (SLAs). Identifying high-risk clauses—such as asymmetrical indemnification, unrestricted liability, or hidden auto-renewal terms—requires meticulous human review. 
 
-ContraLegal-AI addresses this bottleneck by providing a highly scalable automated risk dashboard. The core objective of this project is to parse unstructured legal PDF documents and evaluate textual risk through a combination of statistical machine learning and deterministic legal rules.
+In modern commercial environments, legal teams must process vast volumes of contracts—Non-Disclosure Agreements (NDAs), Master Services Agreements (MSAs), Employment Contracts, and Merger and Acquisition documents—each containing clauses that may impose significant financial liability, asymmetric obligation, or unfavorable jurisdiction. The manual identification of such high-risk clauses demands deep legal expertise and is prohibitively time-consuming.
 
-% ---------- RELATED WORK ----------
+Prior work in legal text classification has predominantly relied on binary labeling schemes and bag-of-words statistical methods \cite{contract_review_old}. While effective for shallow risk detection, these approaches fail to capture the semantic nuance that differentiates a ``Medium Risk'' indemnity clause from a ``High Risk'' unlimited liability clause. Furthermore, they provide no mechanism for explanation, rewriting, or interactive querying.
+
+ContraLegal-AI addresses this gap by delivering an end-to-end automated paralegal system. The core contributions of this work are:
+
+\begin{enumerate}
+    \item A fine-tuned Legal-BERT transformer delivering three-class risk classification with superior performance over classical ML baselines, validated through a formal ablation study.
+    \item A RAG-based conversational AI engine allowing users to interrogate contracts in natural language, explain flagged clauses, and generate fairer rewrites.
+    \item A Spatial NLP highlighting system that outputs a physically annotated PDF with risky clauses marked via coordinate-to-text mapping.
+    \item A production-grade deployment with automated CI/CD testing via GitHub Actions and a streamlit web interface.
+\end{enumerate}
+
+% 2. RELATED WORK
 \section{Related Work}
-The automation of legal document review has gained significant traction with the advent of Natural Language Processing (NLP). Early systems relied heavily on deterministic rule-based matching \cite{contract_review_old}. Modern approaches have shifted towards deep learning and transformer-based models like LegalBERT for semantic understanding. However, for baseline commercial viable systems, statistical methods such as TF-IDF coupled with ensemble classifiers remain highly effective and computationally efficient \cite{scikit-learn}. The availability of expert-annotated legal corpora, such as the Contract Understanding Atticus Dataset (CUAD) \cite{atticus}, has further accelerated the development of supervised machine learning models in the legal tech domain.
 
-% ---------- METHODOLOGY ----------
+Early legal document automation relied on rule-based systems and regular expression matching for clause identification \cite{contract_review_old}. These lacked generalizability across diverse contract types. The introduction of neural embeddings and BERT-family models transformed the field \cite{attention_is_all_you_need}. \texttt{legal-bert-base-uncased}, pre-trained on 12 GB of diverse English legal text (legislation, court decisions, contracts), has demonstrated superior domain adaptation compared to general-purpose BERT variants \cite{legalbert}.
+
+For retrieval-augmented systems, \citet{rag_lewis} demonstrated that grounding LLM responses in retrieved documents significantly reduces hallucination—a critical requirement in legal contexts. The Contract Understanding Atticus Dataset (CUAD) \cite{atticus} has become the standard benchmark for supervised contract clause classification. Our approach distinguishes itself by combining a domain-specific transformer for classification with RAG for generation, together with a novel spatial annotation layer not present in prior work.
+
+% 3. METHODOLOGY
 \section{Methodology}
-The system architecture follows a distinct pipeline format: Data Extraction, Text Normalization, Machine Learning Classification, Hybrid Risk Scoring, and Thematic Grouping.
 
-\subsection{Dataset Description}
-The model was trained on a proprietary dataset comprising 21,144 manually annotated legal clauses. The distribution consisted of 12,816 High Risk clauses and 8,328 Low Risk clauses.
+\subsection{System Architecture}
 
-\subsection{Preprocessing}
-The ingestion layer handles raw, unstructured PDF text. We utilized the \texttt{PyMuPDF} library to geometrically extract textual data. Once extracted, the raw text is subjected to a normalization pipeline utilizing \texttt{spaCy} \cite{spacy}. Stop words, punctuation, and non-alphanumeric noise are stripped. Sentences are segmented into distinct clauses. Furthermore, a Privacy Masker employs Regular Expressions to dynamically redact Personally Identifiable Information (PII) to ensure data protection compliance.
+ContraLegal-AI follows a modular pipeline with three independent components that compose at the application layer. Figure 1 illustrates the high-level architecture.
 
-\subsection{Feature Engineering}
-Textual clauses are mathematically transformed into numerical vectors using Term Frequency-Inverse Document Frequency (TF-IDF). The weight $w_{i,j}$ of term $i$ in document $j$ is calculated as:
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.45\textwidth]{../models/ablation_study.png}
+\caption{Ablation Study: TF-IDF + Random Forest vs. Legal-BERT. Green cells indicate improvement with the transformer model.}
+\label{fig:ablation}
+\end{figure}
+
+\subsection{Dataset}
+
+The system was trained on 21,144 annotated legal clauses derived from publicly available legal corpora \cite{atticus}. A deterministic three-class labeling heuristic was applied:
+
+\begin{itemize}
+    \item \textbf{Low Risk} (8,328 samples, 39.4\%): Clauses with \texttt{clause\_status = 0} in the source annotation.
+    \item \textbf{Medium Risk} (11,491 samples, 54.4\%): Risky clauses with a keyword-weighted risk intensity score $s < 1.5$ (or $s < 1.0$ with text length $< 400$ characters).
+    \item \textbf{High Risk} (1,325 samples, 6.3\%): Risky clauses where the aggregated keyword weight $s \geq 1.5$, or where significant length and elevated weight combine.
+\end{itemize}
+
+The keyword weight $s$ for a clause $c$ is computed as:
 \begin{equation}
- w_{i,j} = \text{TF}_{i,j} \times \log \left( \frac{N}{\text{DF}_i} \right)
+s = \sum_{k \in K} w_k \cdot \mathbf{1}[k \in c]
 \end{equation}
-Where $\text{TF}_{i,j}$ is the frequency of term $i$ in clause $j$, $N$ is the total number of clauses, and $\text{DF}_i$ is the document frequency of term $i$. We configured the vectorizer to capture both unigrams and bigrams, limited to the top 5,000 features.
+where $K$ is the legal keyword vocabulary (e.g., ``indemnify'': 0.9, ``termination for convenience'': 1.0) and $w_k$ is the pre-defined risk weight.
 
-\subsection{Models Used}
+\subsection{Preprocessing and Feature Engineering}
 
-\subsubsection{Random Forest Classifier}
-We employ a Random Forest Classifier to identify patterns associated with "High Risk" clauses. The final class prediction $\hat{y}$ is determined via a majority vote among the individual decision trees $T$:
+All text undergoes normalization via spaCy \cite{spacy}, including stop-word removal, punctuation stripping, and PII masking via regex. For the TF-IDF model, clause text is vectorized using:
 \begin{equation}
-\hat{y} = \text{mode} \{ T_1(x), T_2(x), \dots, T_k(x) \}
+w_{i,j} = \text{TF}_{i,j} \times \log\!\left(\frac{N}{\text{DF}_i}\right)
 \end{equation}
+with unigram+bigram features limited to the top 5,000 tokens. For Legal-BERT, raw text is tokenized using the model's WordPiece tokenizer and truncated to 256 tokens.
 
-\subsubsection{Hybrid Decision Engine}
-To offset the purely statistical nature of the ML classifier, a rule-based inference engine applies deterministic legal constraints. A predefined Legal Keyword Engine scans the clause for high-stakes terminology. A final weighted risk score ($R_{final}$) is geometrically calculated by merging the ML probability ($P_{ml}$) and a Keyword Threat Multiplier ($M_k$):
+\subsection{Phase 1: TF-IDF + Random Forest Baseline}
+
+The baseline classifier is a Random Forest trained on TF-IDF features with balanced class weighting. Class prediction is determined by majority vote across $k$ decision trees:
 \begin{equation}
-R_{final} = \min(P_{ml} \times M_k, 1.0)
+\hat{y} = \text{mode}\{T_1(x), T_2(x), \ldots, T_k(x)\}
+\end{equation}
+The ensemble uses $k=200$ trees with a maximum depth of 20. A Hybrid Decision Engine augments ML probabilities with a deterministic Legal Keyword Engine:
+\begin{equation}
+R_{\text{final}} = \min(P_{\text{ml}} \times M_k,\ 1.0)
+\end{equation}
+where $M_k$ is a keyword-derived threat multiplier.
+
+\subsection{Phase 2: Legal-BERT Fine-Tuning}
+
+\texttt{nlpaueb/legal-bert-base-uncased} is fine-tuned for three-class sequence classification using a custom \texttt{WeightedTrainer} that applies class-balanced cross-entropy loss to address the significant class imbalance (High Risk: 6.3\%):
+\begin{equation}
+\mathcal{L} = -\sum_{c=1}^{3} \alpha_c \cdot y_c \log p_c
+\end{equation}
+where $\alpha_c = N / (3 \cdot N_c)$ are the balanced class weights. Training hyperparameters: 4 epochs, batch size 16, learning rate $2\times10^{-5}$, warmup ratio 0.1, weight decay 0.01. EarlyStopping (patience = 2) is applied on validation Weighted-F1. The data is split 70/15/15 (train/val/test) with stratification.
+
+At inference, the three-class probability vector $[P_L, P_M, P_H]$ is derived. A unified risk score for pipeline compatibility is:
+\begin{equation}
+\text{risk\_score} = 1 - P_L = P_M + P_H
 \end{equation}
 
-\subsubsection{Unsupervised Thematic Analysis}
-To organize large documents, we implement K-Means clustering. The algorithm partitions $n$ clauses into $k$ sets by minimizing the within-cluster sum of squares (WCSS).
+\subsection{Phase 3: RAG Pipeline and Generative AI}
 
-\subsection{Training and Validation}
-Due to the implicitly imbalanced nature of legal risk, we utilized balanced class weighting during the training phase. The classification model was evaluated using a 20\% hold-out test set ($N=4,229$) to ensure generalizability to unseen contract clauses.
+The RAG component (Priyanka Gnana Karanam) uses \texttt{RecursiveCharacterTextSplitter} with chunk size 1000 and overlap 200. Chunks are embedded using \texttt{all-MiniLM-L6-v2} and stored in a FAISS index. A \texttt{ConversationalRetrievalChain} (LangChain) retrieves $k=6$ relevant chunks per query and passes them with a structured system prompt to the selected LLM (Google Gemini 2.5, Groq Llama-3 70B, or GPT-4o-mini).
 
-% ---------- RESULTS ----------
+\subsection{Phase 4: Spatial NLP Highlighting}
+
+The spatial module (Isha Singh) uses PyMuPDF's \texttt{page.search\_for()} API to locate the physical bounding box coordinates of flagged clause text within the original PDF. Duplicate bounding boxes are eliminated via a coordinate hash set. Highlight annotations are rendered with Red ($\text{RGB}: 1, 0, 0$) for High Risk and Amber ($\text{RGB}: 1, 0.8, 0$) for Medium Risk. The annotated PDF is saved using optimized garbage collection and deflate compression.
+
+% 4. RESULTS
 \section{Results}
 
-\subsection{Quantitative Results}
-The Random Forest model achieved exceptional empirical results on the hold-out validation set.
+\subsection{Ablation Study: RF vs. Legal-BERT}
+
+Table \ref{tab:ablation} presents the comparative evaluation on the held-out test set ($N=3{,}172$ samples, 15\% of total corpus).
 
 \begin{table}[ht]
 \centering
-\caption{Model Performance Comparison on Test Data}
-\begin{tabular}{lcccc}
+\caption{Ablation Study: Random Forest vs. Legal-BERT}
+\label{tab:ablation}
+\begin{tabular}{lcc}
 \toprule
-Risk Class & Acc & Prec & Rec & F1 \\
+\textbf{Metric} & \textbf{Random Forest} & \textbf{Legal-BERT} \\
 \midrule
-High Risk & - & 0.98 & 0.97 & 0.98 \\
-Low Risk & - & 0.96 & 0.97 & 0.97 \\
+Accuracy            & 94.44\%  & \textbf{97.01\%} \\
+Weighted F1         & 0.9441   & \textbf{0.9702} \\
+Macro F1            & 0.8901   & \textbf{0.9371} \\
+ROC-AUC (Macro)     & 0.9870   & \textbf{0.9948} \\
 \midrule
-\textbf{Macro Avg} & \textbf{0.97} & \textbf{0.97} & \textbf{0.97} & \textbf{0.97} \\
+Precision — Low Risk     & 0.9561  & \textbf{0.9889} \\
+Recall — Low Risk        & 0.9978  & \textbf{0.9989} \\
+Precision — Medium Risk  & 0.9615  & \textbf{0.9706} \\
+Recall — Medium Risk     & 0.9622  & \textbf{0.9804} \\
+Precision — High Risk    & 0.7344  & \textbf{0.8651} \\
+Recall — High Risk       & 0.7396  & \textbf{0.8594} \\
+\midrule
+\textbf{$\Delta$ High Risk Recall} & —  & \textbf{+11.98\%} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Figures}
-The confusion matrix demonstrates the model's proficiency in accurately identifying both the High Risk and Low Risk classes with minimal false positives or false negatives.
+The most critical improvement is in High Risk Recall (+11.98\%), meaning Legal-BERT catches significantly more dangerous clauses that the Random Forest misclassifies—a paramount quality for legal risk tooling.
+
+\subsection{ROC-AUC Curves}
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.45\textwidth]{../models/confusion_matrix.png}
-\caption{Confusion Matrix representing True Positives and False Positives across the test subset of legal clauses.}
-\label{fig:confusion_matrix}
+\includegraphics[width=0.45\textwidth]{../models/roc_bert.png}
+\caption{Legal-BERT Multi-Class ROC Curve (One-vs-Rest). Macro AUC = 0.9948.}
+\label{fig:roc_bert}
 \end{figure}
 
-% ---------- DISCUSSION ----------
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.45\textwidth]{../models/roc_rf.png}
+\caption{Random Forest Multi-Class ROC Curve (One-vs-Rest). Macro AUC = 0.9870.}
+\label{fig:roc_rf}
+\end{figure}
+
+\subsection{Confusion Matrices}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.45\textwidth]{../models/cm_bert.png}
+\caption{Legal-BERT Confusion Matrix on the 3-class test set.}
+\label{fig:cm_bert}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.45\textwidth]{../models/cm_rf.png}
+\caption{Random Forest Confusion Matrix on the 3-class test set.}
+\label{fig:cm_rf}
+\end{figure}
+
+% 5. DISCUSSION
 \section{Discussion}
-The hybrid approach combining TF-IDF Random Forest with rule-based heuristics proved highly effective for achieving accurate, interpretable risk classification. However, the system is fundamentally constrained by its lack of deep semantic understanding. As a statistical bag-of-words model, it may struggle with highly complex, nuanced legal phrasing where word order dictates the actual obligation.
 
-For future implementations, we plan to migrate from statistical TF-IDF word representations to deep-learning neural word embeddings such as LegalBERT. Furthermore, expanding the training corpus to encompass more comprehensive datasets like the Contract Understanding Atticus Dataset (CUAD) will significantly bolster real-world commercial robustness.
+The results demonstrate that Legal-BERT's domain-specific pre-training provides measurable advantages over classical statistical methods in all evaluation metrics. The most significant improvement—High Risk Recall (+11.98\%)—validates the core premise of the project: semantic understanding is necessary to correctly identify the most consequential clauses.
 
-% ---------- CONCLUSION ----------
+The three-class system represents a fundamental improvement in legal risk granularity. Binary classification forces all risky clauses into a single ``High Risk'' bucket, reducing actionability. The introduction of ``Medium Risk'' allows users to prioritize review of critical clauses while remaining informed of moderate concerns.
+
+The RAG module addresses a key limitation of pure classification systems: interpretability. By grounding LLM responses in retrieved contract text, the system prevents hallucination and ensures all explanations and rewrites are contractually relevant.
+
+The Spatial NLP module closes the gap between digital analysis and practical utility—a physically highlighted PDF is directly usable by legal practitioners without any technical knowledge of the underlying models.
+
+A current limitation is that Legal-BERT's High Risk Recall (85.94\%), while significantly improved, still leaves approximately 14\% of high-risk clauses uncaught. Future work should explore full CUAD-based fine-tuning and ensemble approaches combining BERT with the keyword-based heuristic engine.
+
+% 6. CONCLUSION
 \section{Conclusion}
-The ContraLegal-AI system successfully fulfills its Milestone 1 objectives by providing an end-to-end, modular application that accurately segments, classifies, and clusters legal text. The implementation demonstrates how the fusion of modern UI dashboards, statistical machine learning, and deterministic legal rules can effectively democratize and accelerate the contract review process.
 
-% ---------- REFERENCES ----------
+ContraLegal-AI demonstrates that intelligent contract risk analysis is achievable through a carefully composed system of transformer-based classification, retrieval-augmented generation, and spatial document annotation. The transition from a binary TF-IDF/Random Forest classifier to a three-class Legal-BERT system yields a 2.57\% accuracy gain and a critical 11.98\% improvement in High Risk Recall. The complete system is deployed as a production-grade Streamlit web application with automated CI/CD testing, fulfilling all stated objectives: Upload, Classify, Explain, Chat, and Highlight.
+
+% REFERENCES
 \bibliographystyle{IEEEtranN}
 \bibliography{references}
 
-% ---------- APPENDIX ----------
+% APPENDIX
 \appendix
 
-\section{GitHub Repository Information}
+\section{Repository and Deployment}
 
-This appendix provides details regarding the project’s GitHub repository and associated file structure for reproducibility and open-source collaboration.
-
-\subsection{Repository Link}
-The complete source code, datasets, trained models, and documentation are available at:
-
+\subsection{GitHub Repository}
 \begin{center}
 \textbf{\url{https://github.com/AyushCoder9/ContraLegal-AI}}
 \end{center}
 
+\subsection{Live Deployment (Streamlit Cloud)}
+The application is publicly deployed and accessible via Streamlit Community Cloud. The deployment is connected directly to the GitHub repository's \texttt{main} branch and uses \texttt{secrets.toml} for API key management. The CI/CD pipeline defined in \texttt{.github/workflows/python-app.yml} runs automated smoke tests on every commit.
+
 \subsection{Repository Structure}
-
-The project repository follows the modular structure shown below:
-
 \begin{lstlisting}
 ContraLegal-AI/
-|- app.py 
+|- app.py
+|- .github/workflows/python-app.yml
 |- src/
 |  |- model_trainer.py
-|  |- ui/
 |  |- data_pipeline/
 |  |- inference/
+|  |  |- predictor.py
+|  |  |- llm_engine.py
+|  |  |- keyword_engine.py
 |  |- model/
-|- data/
-|  |- raw/
+|  |  |- bert_trainer.py
+|  |  |- trainer.py
+|  |  |- evaluator.py
+|  |  |- data_loader.py
+|  └── utils/
+|     |- pdf_annotator.py
 |- models/
-|- report/
+|  |- legal_bert/
+|  |- model.pkl / vectorizer.pkl
+|  |- ablation_study.png
+|  |- roc_bert.png / roc_rf.png
+|- notebooks/
+|  |- train_legal_bert_colab.py
 |- requirements.txt
 \end{lstlisting}
 
-\subsection{Description of Key Components}
+\subsection{Team Contributions}
 
 \begin{itemize}
-    \item \textbf{data/}: Contains the raw legal clauses dataset (\texttt{legal\_docs\_modified.csv}).
-    \item \textbf{src/model/}: Contains scripts for data loading, Random Forest model training, and evaluation metric generation.
-    \item \textbf{src/inference/}: Contains the hybrid prediction scripts and legal concept rules for real-time analysis.
-    \item \textbf{src/ui/}: Contains the Streamlit components for visualizing the risk metrics and plotting interactive DataFrames.
-    \item \textbf{models/}: Stores the serialized \texttt{.pkl} files for the vectorizer and trained model.
-    \item \textbf{report/}: Contains the LaTeX project report and references.
-    \item \textbf{app.py}: The primary application entry point for the Streamlit dashboard.
+    \item \textbf{Ayush Kumar Singh}: Legal-BERT fine-tuning pipeline, 3-class data labeling heuristic, comprehensive evaluation framework (ROC-AUC, ablation study, confusion matrices), inference integration with BERT/RF fallback.
+    \item \textbf{Priyanka Gnana Karanam}: RAG pipeline (FAISS, LangChain), LLM provider factory (Gemini/Groq/OpenAI), clause explainer and rewriter, contract chatbot, Streamlit AI assistant UI.
+    \item \textbf{Isha Singh}: Spatial NLP PDF highlighter (PyMuPDF), semantic chunking (RecursiveCharacterTextSplitter), GitHub Actions CI/CD workflow, deployment architecture.
 \end{itemize}
 
 \end{document}

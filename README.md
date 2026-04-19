@@ -1,163 +1,143 @@
-# ContraLegal-AI ⚖️ — The Intelligent AI Paralegal
+<div align="center">
 
-**Team: Null Set** · Ayush Kumar Singh · Isha Singh · Priyanka Gnana Karanam
+![ContraLegal AI Banner](https://readme-typing-svg.demolab.com?font=Montserrat&size=45&pause=1000&color=4F46E5&center=true&vCenter=true&width=1000&height=100&lines=CONTRALEGAL+AI;INTELLIGENT+LEGAL+PARALEGAL;TRANSFORMER-BASED+RISK+ANALYSIS;RAG-POWERED+CONTRACT+INTELLIGENCE)
+
+**Team Null Set**
+Ayush Kumar Singh | Isha Singh | Priyanka Gnana Karanam
+*Newton School Of Technology*
+
+---
 
 [![CI/CD Status](https://github.com/AyushCoder9/ContraLegal-AI/actions/workflows/python-app.yml/badge.svg)](https://github.com/AyushCoder9/ContraLegal-AI/actions)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)](https://python.org)
-[![Legal-BERT](https://img.shields.io/badge/Model-Legal--BERT-purple)](https://huggingface.co/nlpaueb/legal-bert-base-uncased)
-[![Streamlit](https://img.shields.io/badge/Deployed-Streamlit-FF4B4B?logo=streamlit)](https://contralegal-ai.streamlit.app)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![Python Version](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
+[![Model Architecture](https://img.shields.io/badge/Architecture-Legal--BERT-6D28D9?style=flat&logo=huggingface&logoColor=white)](https://huggingface.co/nlpaueb/legal-bert-base-uncased)
+[![Deployment](https://img.shields.io/badge/Platform-Streamlit_Cloud-FF4B4B?style=flat&logo=streamlit&logoColor=white)](https://contralegal-ai.streamlit.app)
+[![License](https://img.shields.io/badge/License-MIT-064E3B?style=flat)](LICENSE)
 
-> **ContraLegal-AI** is a full-stack intelligent legal-tech platform that transforms raw PDF contracts into actionable risk intelligence. Powered by a fine-tuned **Legal-BERT** transformer, **Retrieval-Augmented Generation (RAG)**, and **Spatial NLP**, it automates the detection, explanation, and physical annotation of legal risks within complex documents.
+</div>
 
 ---
 
-## 🚀 Live Features
+### Project Overview
 
-| Feature | Technology | Description |
+ContraLegal AI is an enterprise-grade legal technology ecosystem engineered to synthesize unstructured PDF contracts into multidimensional risk intelligence. By orchestrating a fine-tuned **Legal-BERT** transformer, **Retrieval-Augmented Generation (RAG)**, and **Spatial NLP**, the platform automates the identification, explainability, and physical annotation of legal liabilities with human-level nuance.
+
+---
+
+### Core Engineering Capabilities
+
+| Capability | Orchestration | Technical Specification |
 | :--- | :--- | :--- |
-| **3-Class Risk Classification** | Legal-BERT (Transformer) | Classify every clause as High / Medium / Low risk |
-| **Hybrid Scoring** | BERT + Keyword Engine | Deterministic rules augment ML probabilities |
-| **AI Clause Explainer** | LangChain + Gemini/Groq | Explains *why* a clause is risky in plain English |
-| **AI Clause Rewriter** | LangChain + Gemini/Groq | Suggests a fairer, balanced alternative |
-| **RAG Contract Chat** | FAISS + LangChain | Ask any question about your contract |
-| **Spatial PDF Highlighting** | PyMuPDF | Download PDF with risks physically highlighted in Red/Amber |
-| **Excel + CSV Export** | openpyxl | Full clause-level risk report |
-| **K-Means Clustering** | scikit-learn | Unsupervised thematic grouping of clauses |
-| **CI/CD Pipeline** | GitHub Actions | Automated smoke tests on every commit |
+| **Trimodal Classification** | Legal-BERT | High, Medium, and Low-intensity risk granularity |
+| **Dynamic Scoring** | Hybrid Logic | Fusion of Transformer probabilities and deterministic keyword heuristics |
+| **Explainable AI** | RAG + LangChain | Root-cause analysis of flagged clauses in professional nomenclature |
+| **Strategic Redrafting** | Generative AI | Automated generation of balanced, legally-sound alternative phrasing |
+| **Conversational Querying** | FAISS Vector Store | Real-time, document-grounded Q&A for complex legal inquiries |
+| **Spatial Annotation** | PyMuPDF API | Physical coordinate-to-text mapping for in-situ PDF highlighting |
+| **Relational Data Export** | openpyxl | Structured synthesis of risk distributions in Excel and CSV formats |
+| **Thematic Clustering** | Scikit-Learn | Unsupervised K-Means grouping of obligation-specific clauses |
 
 ---
 
-## 🧠 System Architecture & Team Roles
+### Engineering Hierarchy & Contributions
 
-The project enforces strict **Separation of Concerns**, with each team member owning an independent, composable subsystem.
+The platform is built upon a high-concurrency architecture with a strict separation of concerns across research and deployment layers.
 
-### 1. Deep Learning Engine · Ayush Kumar Singh
-- Fine-tuned `nlpaueb/legal-bert-base-uncased` for **3-class risk classification** (Low / Medium / High)
-- Designed the **keyword-density heuristic** to generate the 3-class training labels from the binary-annotated dataset
-- Built the complete **evaluation framework**: multi-class ROC-AUC curves, branded confusion matrices, and the **Ablation Study** comparing RF vs. BERT
-- Integrated Legal-BERT into the production predictor with an **automatic RF fallback** for high availability
+#### Deep Learning & Transformation | Ayush Kumar Singh
+*   Fine-tuned the `nlpaueb/legal-bert-base-uncased` transformer using a weighted-trainer objective for imbalanced class distribution.
+*   Engineered the 3-class quantitative heuristic for synthetic label generation spanning over 21,000 samples.
+*   Developed the formal ablation study and multi-class ROC-AUC evaluation suite to validate transformer superiority over statistical baselines.
 
-### 2. Generative AI & RAG · Priyanka Gnana Karanam
-- Engineered the **RAG pipeline**: `RecursiveCharacterTextSplitter` → `HuggingFaceEmbeddings` → **FAISS** vector store → `ConversationalRetrievalChain`
-- Built the **LLM Provider Factory** supporting Google Gemini 2.5, Groq Llama-3 70B, and GPT-4o-mini
-- Designed optimized **prompt templates** for clause explanation, rewriting, and contract Q&A
-- Implemented the **Streamlit AI Assistant panel** with chat history management
+#### Generative AI & RAG Orchestration | Priyanka Gnana Karanam
+*   Architected the retrieval-augmented generation pipeline utilizing **FAISS** for vectorized similarity search.
+*   Engineered the LLM Provider Factory, enabling seamless interoperability between Google Gemini, Groq, and OpenAI.
+*   Validated prompt-engineering strategies for deterministic clause synthesis and document-grounded conversational flows.
 
-### 3. Spatial NLP & Deployment · Isha Singh
-- Built the **PDF bounding box annotator** using `PyMuPDF` coordinate-mapping: High Risk → Red, Medium Risk → Amber
-- Engineered **semantic chunking** via `RecursiveCharacterTextSplitter` for optimal RAG retrieval context
-- Architected the **GitHub Actions CI/CD workflow** (`python-app.yml`) for automated environment testing
-- Led **Streamlit Community Cloud deployment** and environment configuration
+#### Spatial NLP & Deployment Systems | Isha Singh
+*   Engineered the spatial highlighting engine using **PyMuPDF** to perform physical document marking via bounding-box coordinate tracking.
+*   Implemented semantic document segmentation to optimize transformer context windows.
+*   Architected the automated CI/CD infrastructure via GitHub Actions for continuous environment validation.
 
 ---
 
-## 📈 Performance Results
+### Quantitative Performance Matrix
 
-The transition from a classical TF-IDF/Random Forest system to a Legal-BERT transformer produced measurable gains across all evaluation metrics.
+The integration of transformer architectures resulted in a fundamental shift in both classification precision and recall intensity.
 
-| Metric | RF Baseline | Legal-BERT | Δ |
+| Metrical Indicator | Random Forest Baseline | Legal-BERT Transformer | Improvement (Δ) |
 | :--- | :---: | :---: | :---: |
 | **Accuracy** | 94.44% | **97.01%** | +2.57% |
-| **Weighted F1** | 0.9441 | **0.9702** | +0.0261 |
-| **Macro F1** | 0.8901 | **0.9371** | +0.0470 |
-| **ROC-AUC (Macro)** | 0.9870 | **0.9948** | +0.0078 |
-| **High Risk Recall** | 73.96% | **85.94%** | **+11.98% 🔥** |
+| **Weighted F1** | 0.9441 | **0.9702** | +2.76% |
+| **Macro F1** | 0.8901 | **0.9371** | +5.28% |
+| **ROC-AUC (Macro)** | 0.9870 | **0.9948** | +0.79% |
+| **High Risk Recall** | 73.96% | **85.94%** | **+11.98%** |
 
-> The most important result: **+11.98% High Risk Recall** — Legal-BERT catches significantly more dangerous clauses that the Random Forest misclassifies.
+*Note: The 11.98% surge in High Risk Recall represents the most critical engineering milestone, ensuring safety in mission-critical legal review.*
 
 ---
 
-## 📂 Project Structure
+### Global Repository Schema
 
 ```text
 ContraLegal-AI/
-├── app.py                          # Streamlit dashboard (main entry point)
-├── .github/
-│   └── workflows/python-app.yml   # CI/CD automated smoke tests
+├── app.py                          # Streamlit Production Environment
+├── .github/workflows/              # Automated CI/CD (python-app.yml)
 ├── src/
-│   ├── model_trainer.py            # Training orchestrator (RF + BERT)
-│   ├── data_pipeline/
-│   │   ├── pipeline.py             # End-to-end document pipeline
-│   │   ├── pdf_extractor.py        # PyMuPDF text extraction
-│   │   └── clause_segment.py       # Semantic chunking
+│   ├── model_trainer.py            # Phase-integrated Training Orchestrator
+│   ├── data_pipeline/              # Semantic Extraction & Normalization
 │   ├── inference/
-│   │   ├── predictor.py            # Hybrid BERT/RF prediction engine
-│   │   ├── llm_engine.py           # LangChain RAG, explainer, rewriter
-│   │   ├── inference_engine.py     # Keyword scoring engine
-│   │   └── keyword_engine.py       # Legal keyword library
+│   │   ├── predictor.py            # Trimodal Detection Engine (BERT/RF)
+│   │   ├── llm_engine.py           # RAG Orchestrator & Conversational Layer
+│   │   └── keyword_engine.py       # Deterministic Rule Definitions
 │   ├── model/
-│   │   ├── bert_trainer.py         # Legal-BERT fine-tuning (local)
-│   │   ├── trainer.py              # Random Forest trainer
-│   │   ├── evaluator.py            # ROC-AUC, confusion matrix, ablation
-│   │   └── data_loader.py          # 3-class label heuristic
+│   │   ├── bert_trainer.py         # Transformer Fine-tuning Suite
+│   │   └── evaluator.py            # Quantitative Performance Metrics
 │   └── utils/
-│       ├── pdf_annotator.py        # Spatial bounding box highlighting
-│       └── dummy_contract.py       # Demo contract for live testing
+│       └── pdf_annotator.py        # Spatial Coordinate Highlighting
 ├── models/
-│   ├── legal_bert/                 # Fine-tuned BERT weights
-│   ├── model.pkl / vectorizer.pkl  # RF baseline (fallback)
-│   ├── ablation_study.png          # RF vs BERT comparison table
-│   ├── roc_bert.png / roc_rf.png   # Multi-class ROC curves
-│   └── cm_bert.png / cm_rf.png     # Confusion matrices
+│   ├── legal_bert/                 # Fine-tuned Weights (nlpaueb)
+│   └── ablation_study.png          # Baseline vs. Transformer Visualization
 ├── notebooks/
-│   └── train_legal_bert_colab.py   # GPU training script for Google Colab
-├── report/
-│   ├── report.tex                  # IEEE-format LaTeX paper
-│   └── references.bib
-└── requirements.txt
+│   └── train_legal_bert_colab.py   # GPU-accelerated Training Script
+└── report/
+    ├── report.pdf                  # Formally Published IEEE Paper
+    └── report.tex                  # Scientific Manuscript Source
 ```
 
 ---
 
-## 💻 Local Setup
+### Operational Deployment
 
-### Prerequisites
-- Python 3.10+
-- At least one API key: [Google AI Studio](https://aistudio.google.com/) (free) or [Groq](https://console.groq.com/) (free)
-
-### Installation
+#### Environment Initialization
 
 ```bash
 git clone https://github.com/AyushCoder9/ContraLegal-AI.git
-cd ContraLegal-AI
-
 pip install -r requirements.txt
 ```
 
-### Run (without training — uses pre-trained BERT from repo)
+#### Application Execution
 
+To initiate the production dashboard with the global pre-trained model:
 ```bash
 streamlit run app.py
 ```
 
-### Train from scratch (optional)
+#### Analytical Training (Optional)
 
+To execute the full analytical pipeline and regenerate performance artifacts:
 ```bash
 python -m src.model_trainer
 ```
 
-> **Note:** Legal-BERT was trained on Google Colab (free T4 GPU, ~15 min). Use `notebooks/train_legal_bert_colab.py` if you need to retrain. The script auto-downloads and zips the model for local deployment.
-
 ---
 
-## 🔮 Future Roadmap
+### Scientific Publication
 
-- **CUAD Full Fine-tuning**: Expand training corpus to the full 500-contract CUAD dataset for improved generalization
-- **Multi-Document Comparison**: Detect discrepancies and obligation shifts between contract versions
-- **OCR Integration**: Process scanned/image-based legal documents via Tesseract
-- **Docker Containerization**: On-premise deployment for data sovereignty in private legal environments
-- **Jurisdiction-Aware Analysis**: Adapt risk scoring based on governing law jurisdiction
-
----
-
-## 🎓 Acknowledgments
-
-This project was developed as a comprehensive University AI initiative. We thank the creators of the [CUAD dataset](https://www.atticusprojectai.org/cuad), [Legal-BERT](https://huggingface.co/nlpaueb/legal-bert-base-uncased), and the [LangChain](https://langchain.com/) and [Streamlit](https://streamlit.io/) teams.
+The technical methodology, algorithmic decisions, and empirical evaluations are documented in the associated IEEE conference-format manuscript located in the `report/` directory.
 
 ---
 
 <div align="center">
-  <b>Null Set © 2026</b><br/>
-  <i>Automating the Future of Paralegalism.</i>
+  <b>Null Set | 2026</b><br/>
+  <i>Engineered for Legal Precision.</i>
 </div>

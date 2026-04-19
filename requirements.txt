@@ -29,10 +29,10 @@ python-dotenv
 huggingface_hub
 
 # Generative AI & RAG
-langchain>=0.3.0
-langchain-core>=0.3.0
-langchain-community>=0.3.0
-langchain-text-splitters
+langchain==0.3.25
+langchain-core==0.3.59
+langchain-community==0.3.24
+langchain-text-splitters==0.3.8
 langchain-google-genai>=2.0.0
 langchain-openai>=0.2.0
 langchain-groq>=0.2.0

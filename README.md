@@ -114,14 +114,18 @@ ContraLegal-AI/
 
 ```bash
 git clone https://github.com/AyushCoder9/ContraLegal-AI.git
-pip install -r requirements.txt
+cd ContraLegal-AI
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements.txt
 ```
 
 #### Application Execution
 
 To initiate the production dashboard with the global pre-trained model:
 ```bash
-streamlit run app.py
+source .venv/bin/activate
+python3 -m streamlit run app.py
 ```
 
 #### Analytical Training (Optional)
